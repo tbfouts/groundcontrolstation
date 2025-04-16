@@ -1,0 +1,6 @@
+<!DOCTYPE RCC>
+<RCC>
+    <qresource prefix="/">
+        <file>images/UASicon.png</file>
+    </qresource>
+</RCC>
