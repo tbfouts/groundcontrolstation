@@ -10,6 +10,7 @@ qt_standard_project_setup(REQUIRES 6.8)
 
 qt_add_executable(appGroundControlStation
     main.cpp
+    TelemetryData.hpp
 )
 
 qt_add_resources(appGroundControlStation "images"
