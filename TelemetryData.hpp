@@ -14,6 +14,7 @@ class TelemetryData : public QObject
     Q_PROPERTY(QGeoCoordinate position READ position NOTIFY positionChanged)
     
 public:
+    explicit TelemetryData(QObject* parent = nullptr) : QObject(parent) {}
     virtual ~TelemetryData() = default;
     
     virtual int battery() const = 0;
