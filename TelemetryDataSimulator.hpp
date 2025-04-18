@@ -19,15 +19,16 @@ public:
     int speed() const override;
     QGeoCoordinate position() const override;
 
+private slots:
+    void updateTelemetry();
+
+private:
+
     // Control methods
     void start();
     void stop();
     void setUpdateInterval(int msec);
 
-private slots:
-    void updateTelemetry();
-
-private:
     QTimer m_updateTimer;
     QRandomGenerator m_random;
     

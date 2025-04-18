@@ -1,5 +1,7 @@
 #include "TelemetryDataSimulator.hpp"
 #include <QDebug>
+#include <QQmlEngine>
+#include <QJSEngine>
 #include <QtMath>
 
 TelemetryDataSimulator::TelemetryDataSimulator(QObject* parent)
@@ -64,6 +66,10 @@ void TelemetryDataSimulator::setUpdateInterval(int msec)
 
 void TelemetryDataSimulator::updateTelemetry()
 {
+    // Log current values for debugging
+    qDebug() << "Current telemetry - Battery:" << m_battery << "Altitude:" << m_altitude 
+             << "Speed:" << m_speed << "Position:" << m_position.latitude() << m_position.longitude();
+             
     // Update battery (slowly decreasing)
     if (m_battery > 0) {
         // 0.1% chance of dropping 1%

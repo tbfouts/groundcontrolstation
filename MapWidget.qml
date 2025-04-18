@@ -4,13 +4,7 @@ import QtPositioning
 import GroundControlStation 1.0
 
 Item
-{
-    // Access telemetry data from C++ singleton
-    property var telemetry: UncrewedAerialSystem.telemetry
-    
-    // Default position in case telemetry is unavailable
-    readonly property var defaultPosition: QtPositioning.coordinate(42.331429, -83.045753) // Detroit
-    
+{    
     Plugin
     {
         id: mapPlugin
@@ -22,7 +16,7 @@ Item
         id: map
         anchors.fill: parent
         plugin: mapPlugin
-        center: telemetry && telemetry.position ? telemetry.position : defaultPosition
+        center: TelemetryData.position || defaultPosition
         zoomLevel: 13
 
         // Animation for center coordinate changes
@@ -50,7 +44,7 @@ Item
             id: uasMarker
             anchorPoint.x: uasIcon.width/2
             anchorPoint.y: uasIcon.height/2
-            coordinate: telemetry && telemetry.position ? telemetry.position : defaultPosition
+            coordinate: TelemetryData.position
 
             // Animation for center coordinate changes
             Behavior on coordinate {

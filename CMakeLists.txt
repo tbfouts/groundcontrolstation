@@ -11,10 +11,11 @@ qt_standard_project_setup(REQUIRES 6.8)
 qt_add_executable(appGroundControlStation
     main.cpp
     TelemetryData.hpp
-    UncrewedAerialSystem.hpp
-    UncrewedAerialSystem.cpp
+    TelemetryData.cpp
     TelemetryDataSimulator.hpp
     TelemetryDataSimulator.cpp
+    UASStateMachine.hpp
+    UASStateMachine.cpp
 )
 
 qt_add_resources(appGroundControlStation "images"
@@ -40,10 +41,11 @@ qt_add_qml_module(appGroundControlStation
         ConfirmationSlider.qml
     SOURCES
         TelemetryData.hpp
-        UncrewedAerialSystem.hpp
-        UncrewedAerialSystem.cpp
+        TelemetryData.cpp
         TelemetryDataSimulator.hpp
         TelemetryDataSimulator.cpp
+        UASStateMachine.hpp
+        UASStateMachine.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

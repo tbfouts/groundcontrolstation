@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Material
 import QtQuick.Layouts
+import GroundControlStation 1.0
 
 Rectangle {
     id: statusWidget
@@ -8,13 +10,11 @@ Rectangle {
     radius: 10
     border.color: "#2a2a2a"
     border.width: 1
-    
-    // Properties for UAS status
+        
+    // Simulated properties
     property string connectionStatus: "Connected" // "Connected", "Disconnected", "Connecting"
     property string operationalMode: "Manual" // "Manual", "Autonomous", "Return to Home"
-    property string flightStatus: "Landed" // "Landed", "Flying", "Takeoff", "Landing"
     property int signalStrength: 85 // 0-100
-    property bool isArmed: false
     
     ColumnLayout {
         anchors.fill: parent
@@ -35,13 +35,6 @@ Rectangle {
             Layout.fillWidth: true
             label: "CONNECTION"
             value: connectionStatus
-            
-            // Choose color based on connection status
-            valueColor: {
-                if (connectionStatus === "Connected") return "#4dff64"
-                if (connectionStatus === "Connecting") return "#ffcc00"
-                return "#ff4d4d"
-            }
         }
         
         DataLabel
@@ -49,11 +42,6 @@ Rectangle {
             Layout.fillWidth: true
             label: "SIGNAL STRENGTH"
             value: signalStrength + "%"
-            valueColor: {
-                if (signalStrength > 70) return "#4dff64"
-                if (signalStrength > 40) return "#ffcc00"
-                return "#ff4d4d"
-            }
         }
         
         DataLabel
@@ -68,46 +56,36 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "FLIGHT STATUS"
-            value: flightStatus
-            valueColor: {
-                if (flightStatus === "Landed") return "#4dff64"
-                if (flightStatus === "Flying") return "#3cc3ff"
-                if (flightStatus === "Takeoff") return "#ffcc00"
-                if (flightStatus === "Landing") return "#ffcc00"
-                return "#ffffff"
+            value: {
+                switch(TelemetryData.state)
+                {
+                    case UASState.Landed:
+                        return "Landed"
+                    case UASState.TakingOff:
+                        return "Taking Off"
+                    case UASState.Flying:
+                        return "Flying"
+                    case UASState.Loitering:
+                        return "Loitering"
+                    case UASState.Landing:
+                        return "Landing"
+                    default:
+                        return "Unknown"
+                }
             }
-        }
-        
-        DataLabel {
-            Layout.fillWidth: true
-            label: "ARM STATUS"
-            value: isArmed ? "ARMED" : "DISARMED"
-            valueColor: isArmed ? "#ff4d4d" : "#4dff64"
-        }
-        
-        // Animation to simulate status changes
-        Timer {
-            interval: 5000
-            running: true
-            repeat: true
-            
-            onTriggered: {
-                // Simulate random status changes for demonstration
-                var r = Math.random()
-                
-                if (r > 0.8) {
-                    statusWidget.connectionStatus = statusWidget.connectionStatus === "Connected" ? 
-                        "Connecting" : (statusWidget.connectionStatus === "Connecting" ? 
-                        "Connected" : "Disconnected")
-                } else if (r > 0.6) {
-                    statusWidget.signalStrength = Math.min(100, Math.max(0, 
-                        statusWidget.signalStrength + (Math.random() > 0.5 ? 10 : -10)))
-                } else if (r > 0.4) {
-                    statusWidget.operationalMode = ["Manual", "Autonomous", "Return to Home"][Math.floor(Math.random() * 3)]
-                } else if (r > 0.2) {
-                    statusWidget.flightStatus = ["Landed", "Flying", "Takeoff", "Landing"][Math.floor(Math.random() * 4)]
-                } else {
-                    statusWidget.isArmed = !statusWidget.isArmed
+            valueColor: {
+                switch(TelemetryData.state)
+                {
+                    case UASState.Landed:
+                        return "#4dff64"
+                    case UASState.Flying: 
+                    case UASState.Loitering:
+                        return "#3cc3ff"
+                    case UASState.TakingOff:
+                    case UASState.Landing:
+                        return "#ffcc00"
+                    default:
+                        return "#ffffff"
                 }
             }
         }

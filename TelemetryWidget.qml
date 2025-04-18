@@ -9,10 +9,7 @@ Rectangle {
     radius: 10
     border.color: "#2a2a2a"
     border.width: 1
-    
-    // Access telemetry data from C++ singleton
-    property var telemetry: UncrewedAerialSystem.telemetry
-    
+        
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 20
@@ -31,10 +28,12 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "BATTERY"
-            value: telemetry ? (telemetry.battery + "%") : "N/A"
+            value: TelemetryData.battery + "%"
             valueColor: {
-                if (telemetry && telemetry.battery > 60) return "#4dff64"
-                if (telemetry && telemetry.battery > 30) return "#ffcc00"
+                if (TelemetryData.battery > 60)
+                    return "#4dff64"
+                if (TelemetryData.battery > 30)
+                    return "#ffcc00"
                 return "#ff4d4d"
             }
         }
@@ -43,7 +42,7 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "ALTITUDE"
-            value: telemetry ? (telemetry.altitude + " m") : "N/A"
+            value: TelemetryData.altitude + " m"
             valueColor: "#3cc3ff"
         }
         
@@ -51,7 +50,7 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "SPEED"
-            value: telemetry ? (telemetry.speed + " m/s") : "N/A"
+            value: TelemetryData.speed + " m/s"
             valueColor: "#3cc3ff"
         }
         
@@ -59,7 +58,7 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "LATITUDE"
-            value: telemetry && telemetry.position ? (telemetry.position.latitude.toFixed(6) + "°") : "N/A"
+            value: TelemetryData.position.latitude.toFixed(6) + "°"
             valueColor: "#ffffff"
         }
         
@@ -67,7 +66,7 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "LONGITUDE"
-            value: telemetry && telemetry.position ? (telemetry.position.longitude.toFixed(6) + "°") : "N/A"
+            value: TelemetryData.position.longitude.toFixed(6) + "°"
             valueColor: "#ffffff"
         }
     }
