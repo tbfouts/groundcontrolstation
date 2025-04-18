@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import GroundControlStation 1.0
 
 Rectangle {
     id: telemetryWidget
@@ -9,84 +10,8 @@ Rectangle {
     border.color: "#2a2a2a"
     border.width: 1
     
-    // Telemetry data properties
-    property double batteryPercentage: 75
-    property double altitude: 145.7
-    property double speed: 12.3
-    property double latitude: 42.331429
-    property double longitude: -83.045753
-    
-    // Animation to simulate battery changes
-    SequentialAnimation {
-        running: true
-        loops: Animation.Infinite
-        
-        NumberAnimation {
-            target: telemetryWidget
-            property: "batteryPercentage"
-            from: 75
-            to: 25
-            duration: 12000
-            easing.type: Easing.InOutQuad
-        }
-        
-        NumberAnimation {
-            target: telemetryWidget
-            property: "batteryPercentage"
-            from: 25
-            to: 75
-            duration: 12000
-            easing.type: Easing.InOutQuad
-        }
-    }
-    
-    // Animation to simulate altitude changes
-    SequentialAnimation {
-        running: true
-        loops: Animation.Infinite
-        
-        NumberAnimation {
-            target: telemetryWidget
-            property: "altitude"
-            from: 145.7
-            to: 210.3
-            duration: 8000
-            easing.type: Easing.InOutSine
-        }
-        
-        NumberAnimation {
-            target: telemetryWidget
-            property: "altitude"
-            from: 210.3
-            to: 145.7
-            duration: 8000
-            easing.type: Easing.InOutSine
-        }
-    }
-    
-    // Animation to simulate speed changes
-    SequentialAnimation {
-        running: true
-        loops: Animation.Infinite
-        
-        NumberAnimation {
-            target: telemetryWidget
-            property: "speed"
-            from: 12.3
-            to: 18.7
-            duration: 5000
-            easing.type: Easing.InOutQuad
-        }
-        
-        NumberAnimation {
-            target: telemetryWidget
-            property: "speed"
-            from: 18.7
-            to: 12.3
-            duration: 5000
-            easing.type: Easing.InOutQuad
-        }
-    }
+    // Access telemetry data from C++ singleton
+    property var telemetry: UncrewedAerialSystem.telemetry
     
     ColumnLayout {
         anchors.fill: parent
@@ -106,10 +31,10 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "BATTERY"
-            value: Math.round(batteryPercentage) + "%"
+            value: telemetry ? (telemetry.battery + "%") : "N/A"
             valueColor: {
-                if (batteryPercentage > 60) return "#4dff64"
-                if (batteryPercentage > 30) return "#ffcc00"
+                if (telemetry && telemetry.battery > 60) return "#4dff64"
+                if (telemetry && telemetry.battery > 30) return "#ffcc00"
                 return "#ff4d4d"
             }
         }
@@ -118,7 +43,7 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "ALTITUDE"
-            value: altitude.toFixed(1) + " m"
+            value: telemetry ? (telemetry.altitude + " m") : "N/A"
             valueColor: "#3cc3ff"
         }
         
@@ -126,7 +51,7 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "SPEED"
-            value: speed.toFixed(1) + " m/s"
+            value: telemetry ? (telemetry.speed + " m/s") : "N/A"
             valueColor: "#3cc3ff"
         }
         
@@ -134,7 +59,7 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "LATITUDE"
-            value: latitude.toFixed(6) + "°"
+            value: telemetry && telemetry.position ? (telemetry.position.latitude.toFixed(6) + "°") : "N/A"
             valueColor: "#ffffff"
         }
         
@@ -142,7 +67,7 @@ Rectangle {
         {
             Layout.fillWidth: true
             label: "LONGITUDE"
-            value: longitude.toFixed(6) + "°"
+            value: telemetry && telemetry.position ? (telemetry.position.longitude.toFixed(6) + "°") : "N/A"
             valueColor: "#ffffff"
         }
     }

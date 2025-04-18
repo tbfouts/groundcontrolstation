@@ -36,11 +36,15 @@ private:
     int m_speed;
     QGeoCoordinate m_position;
     
+    // Movement direction (in degrees, 0-359)
+    int m_direction;
+    
     // Simulation parameters
-    static constexpr int DEFAULT_UPDATE_INTERVAL = 1000; // ms
-    static constexpr double MAX_ALTITUDE_CHANGE = 5.0;   // meters
-    static constexpr double MAX_SPEED_CHANGE = 2.0;      // m/s
-    static constexpr double MAX_LAT_LON_CHANGE = 0.0001; // degrees
+    static constexpr int DEFAULT_UPDATE_INTERVAL = 100; // ms
+    static constexpr double MAX_ALTITUDE_CHANGE = 10.0;  // meters
+    static constexpr double MAX_SPEED_CHANGE = 5.0;      // m/s
+    static constexpr double MOVEMENT_STEP = 0.0005;      // degrees per update
+    static constexpr int DIRECTION_CHANGE_PROBABILITY = 2; // % chance to change direction per update
 };
 
 #endif // TELEMETRYDATASIMULATOR_HPP

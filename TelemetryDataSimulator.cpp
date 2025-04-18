@@ -1,4 +1,6 @@
 #include "TelemetryDataSimulator.hpp"
+#include <QDebug>
+#include <QtMath>
 
 TelemetryDataSimulator::TelemetryDataSimulator(QObject* parent)
     : TelemetryData(parent)
@@ -7,6 +9,7 @@ TelemetryDataSimulator::TelemetryDataSimulator(QObject* parent)
     , m_altitude(0)
     , m_speed(0)
     , m_position(42.3314, -83.0458) // Default position: Detroit, MI
+    , m_direction(m_random.bounded(360)) // Random initial direction
 {
     // Connect timer to update method
     connect(&m_updateTimer, &QTimer::timeout, this, &TelemetryDataSimulator::updateTelemetry);
@@ -79,22 +82,39 @@ void TelemetryDataSimulator::updateTelemetry()
         emit altitudeChanged(m_altitude);
     }
     
-    // Update speed with random changes
-    int newSpeed = m_speed + static_cast<int>((m_random.generateDouble() * 2.0 - 1.0) * MAX_SPEED_CHANGE);
-    newSpeed = qMax(0, newSpeed); // Don't go below 0
+    // Update speed with smaller random changes for smoothness
+    int speedChange = static_cast<int>((m_random.generateDouble() * 2.0 - 1.0) * 2.0);
+    int newSpeed = m_speed + speedChange;
+    newSpeed = qMax(0, qMin(40, newSpeed)); // Keep between 0-40 m/s
     
     if (m_speed != newSpeed) {
         m_speed = newSpeed;
         emit speedChanged(m_speed);
     }
     
-    // Update position with small random changes
-    double newLat = m_position.latitude() + (m_random.generateDouble() * 2.0 - 1.0) * MAX_LAT_LON_CHANGE;
-    double newLon = m_position.longitude() + (m_random.generateDouble() * 2.0 - 1.0) * MAX_LAT_LON_CHANGE;
+    // Possibly change direction (small probability)
+    if (static_cast<int>(m_random.generateDouble() * 100) < DIRECTION_CHANGE_PROBABILITY) {
+        // Change direction by -45 to +45 degrees
+        int directionChange = static_cast<int>((m_random.generateDouble() * 2.0 - 1.0) * 45);
+        m_direction = (m_direction + directionChange + 360) % 360;
+        qDebug() << "Direction changed to:" << m_direction << "degrees";
+    }
     
+    // Move in the current direction
+    double radians = m_direction * M_PI / 180.0;
+    double latChange = MOVEMENT_STEP * cos(radians);
+    double lonChange = MOVEMENT_STEP * sin(radians);
+    
+    // Calculate new position based on direction
+    double newLat = m_position.latitude() + latChange;
+    double newLon = m_position.longitude() + lonChange;
+    
+    // Create and set the new position
     QGeoCoordinate newPosition(newLat, newLon);
     if (m_position != newPosition) {
         m_position = newPosition;
+        qDebug() << "Position updated to:" << newPosition.latitude() << newPosition.longitude() 
+                 << "Direction:" << m_direction << "Speed:" << m_speed;
         emit positionChanged(m_position);
     }
 }
