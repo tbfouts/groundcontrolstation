@@ -11,196 +11,111 @@ Rectangle {
     
     // Public properties
     property string actionText: "CONFIRM ACTION"
-    property bool isConfirmed: false
-    property int confirmThreshold: 80 // Percentage needed to confirm (0-100)
-    property color confirmColor: "#4dff64"  // Green for confirm
-    property color pendingColor: "#ff9500"  // Orange for pending
-    property color trackColor: "#333333"    // Dark gray for track
-    
-    // Private properties
-    property bool _dragging: false
-    property real _draggedPercentage: 0
-    property bool _confirmationPending: false
+    property int confirmThreshold: 100 // Percentage needed to confirm (0-100)
     
     // Signals
     signal confirmed()
     
-    // Reset state when action text changes
-    onActionTextChanged: resetState()
-    
-    // Enable/disable animation based on state
-    SequentialAnimation {
-        id: blinkAnimation
-        running: _confirmationPending
-        loops: Animation.Infinite
-        
-        PropertyAnimation {
-            target: confirmTrack
-            property: "opacity"
-            from: 1.0
-            to: 0.6
-            duration: 700
-        }
-        
-        PropertyAnimation {
-            target: confirmTrack
-            property: "opacity"
-            from: 0.6
-            to: 1.0
-            duration: 700
-        }
-    }
-    
-    // Background track
-    Rectangle {
-        id: sliderTrack
+    // Container for the slider
+    ColumnLayout {
         anchors.fill: parent
-        color: trackColor
-        radius: parent.radius
+        anchors.margins: 5
+        spacing: 5
         
-        // Colored confirmation track that grows as slider moves
-        Rectangle {
-            id: confirmTrack
-            width: parent.width * _draggedPercentage / 100
-            height: parent.height
-            color: _confirmationPending ? pendingColor : confirmColor
-            radius: parent.radius
-            
-            Behavior on width {
-                enabled: !_dragging
-                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
-            }
-        }
-        
-        // Slider handle
-        Rectangle {
-            id: sliderHandle
-            width: height
-            height: parent.height - 16
-            radius: height / 2
-            x: Math.min(parent.width - width - 4, Math.max(4, (_draggedPercentage / 100) * (parent.width - width - 8) + 4))
-            y: 8
-            color: "#ffffff"
-            
-            Behavior on x {
-                enabled: !_dragging
-                NumberAnimation { duration: 300; easing.type: Easing.OutBack }
-            }
-            
-            // Handle shadow
-            Rectangle {
-                anchors.fill: parent
-                radius: parent.radius
-                color: "#10000000"
-                z: -1
-                anchors.bottomMargin: -2
-                anchors.rightMargin: -2
-                anchors.leftMargin: 2
-                anchors.topMargin: 2
+        // Slider for confirmation
+        Slider {
+            id: slider
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            from: 0
+            to: 100
+            value: 0
+
+            // Custom handle that shows an arrow icon
+            handle: Rectangle {
+                x: slider.leftPadding + (slider.visualPosition * (slider.availableWidth - width))
+                y: slider.topPadding + (slider.availableHeight - height) / 2
+                width: height
+                height: confirmationSlider.height / 2
+                radius: 25
+                color: "#ffffff"
+                border.color: "#dddddd"
+
+                // Arrow icon
+                Text {
+                    anchors.centerIn: parent
+                    text: "→"
+                    font.pixelSize: 20
+                    font.bold: true
+                    color: "#333333"
+                }
             }
             
-            // Arrow icon inside handle
-            Text {
-                anchors.centerIn: parent
-                text: "→"
+            // Custom background for the slider track
+            background: Rectangle {
+                x: slider.leftPadding
+                y: slider.topPadding + (slider.availableHeight - height) / 2
+                width: slider.availableWidth
+                height: 10
+                radius: 5
                 color: "#333333"
-                font.pixelSize: parent.height * 0.5
-                font.bold: true
+                
+                // Colored portion that shows progress
+                Rectangle {
+                    width: slider.visualPosition * parent.width
+                    height: parent.height
+                    radius: 5
+                    color: slider.value >= confirmThreshold ? "#4dff64" : "#3cc3ff"
+                }
+            }
+            
+            // Handle drag completion - trigger confirmation when exceeding threshold
+            onPressedChanged: {
+                if (!pressed && value >= confirmThreshold) {
+                    confirmed();
+                    
+                    // Reset after a delay
+                    resetTimer.start();
+                } else if (!pressed) {
+                    // Spring back to start if released below threshold
+                    resetAnimation.start();
+                }
             }
         }
         
         // Instruction text
         Text {
-            anchors.centerIn: parent
-            text: _confirmationPending ? "RELEASE TO CONFIRM" : 
-                                        (_draggedPercentage > 0 ? "SLIDE TO CONFIRM" : "SLIDE RIGHT TO " + actionText)
+            id: instructionText
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
             color: "#ffffff"
             font.pixelSize: 14
             font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-            leftPadding: sliderHandle.width + 10
-            rightPadding: sliderHandle.width + 10
-        }
-        
-        // Touch/mouse area for drag interaction
-        MouseArea {
-            anchors.fill: parent
-            
-            onPressed: {
-                _dragging = true
-                updateDragPosition(mouseX)
-            }
-            
-            onReleased: {
-                _dragging = false
-                
-                if (_draggedPercentage >= confirmThreshold) {
-                    confirmed()
-                } else {
-                    resetPosition()
-                }
-            }
-            
-            onPositionChanged: {
-                if (_dragging) {
-                    updateDragPosition(mouseX)
-                }
-            }
-            
-            onCanceled: {
-                _dragging = false
-                resetPosition()
+            text: {
+                if (slider.value >= confirmThreshold) 
+                    return "RELEASE TO CONFIRM";
+                else if (slider.value > 0)
+                    return "SLIDE TO CONFIRM";
+                else
+                    return "SLIDE RIGHT TO " + actionText;
             }
         }
     }
     
-    // Timer to reset the slider after confirmation
+    // Animation to reset slider to 0
+    NumberAnimation {
+        id: resetAnimation
+        target: slider
+        property: "value"
+        to: 0
+        duration: 300
+        easing.type: Easing.OutBack
+    }
+    
+    // Timer to reset after confirmation
     Timer {
         id: resetTimer
-        interval: 2000
-        repeat: false
-        onTriggered: {
-            resetState()
-        }
-    }
-    
-    // Reset position without resetting confirmation
-    function resetPosition() {
-        if (!_confirmationPending) {
-            _draggedPercentage = 0
-        }
-    }
-    
-    // Reset the entire slider state
-    function resetState() {
-        _confirmationPending = false
-        _draggedPercentage = 0
-        isConfirmed = false
-        resetTimer.stop()
-    }
-    
-    // Cancel an in-progress confirmation
-    function cancelConfirmation() {
-        if (_confirmationPending) {
-            _confirmationPending = false
-            resetPosition()
-            confirmationCancelled()
-        }
-    }
-    
-    // Update the drag position based on mouse x coordinate
-    function updateDragPosition(mouseX) {
-        if (_confirmationPending) {
-            // Allow cancellation by dragging back
-            if (mouseX < sliderTrack.width * 0.5) {
-                cancelConfirmation()
-            }
-            return
-        }
-        
-        // Calculate drag percentage
-        var maxDragX = sliderTrack.width - sliderHandle.width - 8
-        var dragPercentage = Math.max(0, Math.min(100, (mouseX - sliderHandle.width / 2) / maxDragX * 100))
-        _draggedPercentage = dragPercentage
+        interval: 500
+        onTriggered: resetAnimation.start()
     }
 }

@@ -29,32 +29,11 @@ Rectangle {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
         }
-        
+
         DataLabel
         {
             Layout.fillWidth: true
-            label: "CONNECTION"
-            value: connectionStatus
-        }
-        
-        DataLabel
-        {
-            Layout.fillWidth: true
-            label: "SIGNAL STRENGTH"
-            value: signalStrength + "%"
-        }
-        
-        DataLabel
-        {
-            Layout.fillWidth: true
-            label: "MODE"
-            value: operationalMode
-            valueColor: "#ffffff"
-        }
-        
-        DataLabel
-        {
-            Layout.fillWidth: true
+            Layout.fillHeight: true
             label: "FLIGHT STATUS"
             value: {
                 switch(TelemetryData.state)
@@ -78,16 +57,50 @@ Rectangle {
                 {
                     case UASState.Landed:
                         return "#4dff64"
-                    case UASState.Flying: 
+                    case UASState.Flying:
                     case UASState.Loitering:
                         return "#3cc3ff"
                     case UASState.TakingOff:
                     case UASState.Landing:
                         return "#ffcc00"
                     default:
-                        return "#ffffff"
+                        return "red"
                 }
             }
+        }
+        
+        DataLabel
+        {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            label: "CONNECTION"
+            value: connectionStatus
+        }
+        
+        DataLabel
+        {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            label: "SIGNAL STRENGTH"
+            value: signalStrength + "%"
+        }
+        
+        DataLabel
+        {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            label: "MODE"
+            value: operationalMode
+            valueColor: "#ffffff"
+        }
+
+        DataLabel
+        {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            label: "HEADING"
+            value: "NW"
+            valueColor: "#ffffff"
         }
     }
 }

@@ -27,6 +27,7 @@ Rectangle {
         DataLabel
         {
             Layout.fillWidth: true
+            Layout.fillHeight: true
             label: "BATTERY"
             value: TelemetryData.battery + "%"
             valueColor: {
@@ -41,6 +42,7 @@ Rectangle {
         DataLabel
         {
             Layout.fillWidth: true
+            Layout.fillHeight: true
             label: "ALTITUDE"
             value: TelemetryData.altitude + " m"
             valueColor: "#3cc3ff"
@@ -49,6 +51,7 @@ Rectangle {
         DataLabel
         {
             Layout.fillWidth: true
+            Layout.fillHeight: true
             label: "SPEED"
             value: TelemetryData.speed + " m/s"
             valueColor: "#3cc3ff"
@@ -57,6 +60,7 @@ Rectangle {
         DataLabel
         {
             Layout.fillWidth: true
+            Layout.fillHeight: true
             label: "LATITUDE"
             value: TelemetryData.position.latitude.toFixed(6) + "°"
             valueColor: "#ffffff"
@@ -65,6 +69,7 @@ Rectangle {
         DataLabel
         {
             Layout.fillWidth: true
+            Layout.fillHeight: true
             label: "LONGITUDE"
             value: TelemetryData.position.longitude.toFixed(6) + "°"
             valueColor: "#ffffff"

@@ -1,73 +1,91 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 
-Rectangle {
-    id: button
-    radius: 10
-    color: buttonNormalColor
-
+Item {
+    id: root
+    
+    // Public properties
     property string buttonText: "BUTTON"
     property string iconSource: ""
     property bool isActive: false
+    
+    // Actions for this button
+    signal confirmed()
 
-    signal clicked()
-
-    Text {
-        text: buttonText
-        color: "#ffffff"
-        font.pixelSize: 18
-        font.bold: true
+    // Whether or not the confirmation slider should be shown
+    property bool showConfirmationSlider: false
+    
+    // Colors
+    property color normalColor: "#333333"
+    property color hoverColor: "#444444"
+    property color pressedColor: "#222222"
+    property color activeColor: "#4dff64"
+    
+    // Button itself
+    Rectangle {
+        id: buttonRect
+        anchors.top: parent.top
         anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.margins: 20
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-    }
-
-    Image {
-        source: iconSource
-        height: 30
-        width: 30
         anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.margins: 20
-        fillMode: Image.PreserveAspectFit
-        Layout.alignment: Qt.AlignVCenter
+        height: parent.height
+        radius: 10
+        
+        // Dynamic color based on state
+        color: isActive ? activeColor : (mouseArea.containsPress ? pressedColor : (mouseArea.containsMouse ? hoverColor : normalColor))
+        
+        Text {
+            text: buttonText
+            color: "#ffffff"
+            font.pixelSize: 18
+            font.bold: true
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.margins: 20
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+        
+        Image {
+            source: iconSource
+            height: 30
+            width: 30
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.margins: 20
+            fillMode: Image.PreserveAspectFit
+            Layout.alignment: Qt.AlignVCenter
+        }
+        
+        // Hover and pressed states
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            
+            onClicked: showConfirmationSlider = !showConfirmationSlider
+        }
     }
+    
+    // Confirmation slider, loaded only when needed
+    Loader {
+        id: confirmLoader
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: showConfirmationSlider ? buttonRect.height : 0
+        active: showConfirmationSlider
+        visible: showConfirmationSlider
 
-    // Hover and pressed states
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-
-        onClicked: button.clicked()
-
-        // Visual feedback
-        onPressed: {
-            button.color = buttonPressedColor
+        sourceComponent: ConfirmationSlider {
+            id: slider
+            actionText: buttonText
+            anchors.fill: parent
+            
+            onConfirmed: {
+                root.confirmed();
+                showConfirmationSlider = false;
+            }
         }
-
-        onReleased: {
-            if (containsMouse)
-                button.color = buttonHoverColor
-            else
-                button.color = buttonNormalColor
-        }
-
-        onEntered: {
-            if (!pressed)
-                button.color = buttonHoverColor
-        }
-
-        onExited: {
-            if (!pressed)
-                button.color = buttonNormalColor
-        }
-    }
-
-    // Color transition animation
-    Behavior on color {
-        ColorAnimation { duration: 150 }
     }
 }

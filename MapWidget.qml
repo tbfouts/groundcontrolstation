@@ -16,8 +16,22 @@ Item
         id: map
         anchors.fill: parent
         plugin: mapPlugin
-        center: TelemetryData.position || defaultPosition
-        zoomLevel: 13
+        center: TelemetryData.position
+        zoomLevel: TelemetryData.speed < 10 ? 20 : 15
+
+        // Keep the map centered on the UAS position
+        Connections {
+            target: TelemetryData
+            function onPositionChanged() {
+                map.center = TelemetryData.position
+            }
+        }
+
+        Behavior on zoomLevel {
+            NumberAnimation {
+                duration: 5000
+            }
+        }
 
         // Animation for center coordinate changes
         Behavior on center {

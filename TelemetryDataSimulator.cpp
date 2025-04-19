@@ -13,16 +13,13 @@ TelemetryDataSimulator::TelemetryDataSimulator(QObject* parent)
     , m_position(42.3314, -83.0458) // Default position: Detroit, MI
     , m_direction(m_random.bounded(360)) // Random initial direction
 {
-    // Connect timer to update method
-    connect(&m_updateTimer, &QTimer::timeout, this, &TelemetryDataSimulator::updateTelemetry);
-    
-    // Set default update interval
-    m_updateTimer.setInterval(DEFAULT_UPDATE_INTERVAL);
+    // Connect to state changes
+    connect(m_stateMachine, &UASStateMachine::currentStateChanged,
+            this, &TelemetryDataSimulator::handleStateChange);
 }
 
 TelemetryDataSimulator::~TelemetryDataSimulator()
 {
-    stop();
 }
 
 int TelemetryDataSimulator::battery() const
@@ -45,82 +42,229 @@ QGeoCoordinate TelemetryDataSimulator::position() const
     return m_position;
 }
 
-void TelemetryDataSimulator::start()
+void TelemetryDataSimulator::handleStateChange(UASState::State newState)
 {
-    if (!m_updateTimer.isActive()) {
-        m_updateTimer.start();
+    qDebug() << "TelemetryDataSimulator: State changed to" << newState;
+
+    // Handle state changes
+    switch (newState) {
+    case UASState::TakingOff:
+        simulateTakeOff();
+        break;
+
+    case UASState::Landing:
+        simulateLanding();
+        break;
+
+    case UASState::Loitering:
+        simulateLoitering();
+        break;
+
+    case UASState::Flying:
+        simulateFlying();
+        break;
+
+    case UASState::Landed:
+        break;
+
+    default:
+        break;
     }
 }
 
-void TelemetryDataSimulator::stop()
+// Creates a simulation timer with the specified interval
+QTimer* TelemetryDataSimulator::createSimTimer(int interval)
 {
-    if (m_updateTimer.isActive()) {
-        m_updateTimer.stop();
-    }
+    QTimer* timer = new QTimer(this);
+    timer->setInterval(interval);
+    return timer;
 }
 
-void TelemetryDataSimulator::setUpdateInterval(int msec)
+void TelemetryDataSimulator::updatePosition()
 {
-    m_updateTimer.setInterval(msec > 0 ? msec : DEFAULT_UPDATE_INTERVAL);
-}
-
-void TelemetryDataSimulator::updateTelemetry()
-{
-    // Log current values for debugging
-    qDebug() << "Current telemetry - Battery:" << m_battery << "Altitude:" << m_altitude 
-             << "Speed:" << m_speed << "Position:" << m_position.latitude() << m_position.longitude();
-             
-    // Update battery (slowly decreasing)
-    if (m_battery > 0) {
-        // 0.1% chance of dropping 1%
-        if (static_cast<int>(m_random.generateDouble() * 1000) < 1) {
-            m_battery--;
-            emit batteryChanged(m_battery);
-        }
-    }
-    
-    // Update altitude with random changes
-    int newAltitude = m_altitude + static_cast<int>((m_random.generateDouble() * 2.0 - 1.0) * MAX_ALTITUDE_CHANGE);
-    newAltitude = qMax(0, newAltitude); // Don't go below 0
-    
-    if (m_altitude != newAltitude) {
-        m_altitude = newAltitude;
-        emit altitudeChanged(m_altitude);
-    }
-    
-    // Update speed with smaller random changes for smoothness
-    int speedChange = static_cast<int>((m_random.generateDouble() * 2.0 - 1.0) * 2.0);
-    int newSpeed = m_speed + speedChange;
-    newSpeed = qMax(0, qMin(40, newSpeed)); // Keep between 0-40 m/s
-    
-    if (m_speed != newSpeed) {
-        m_speed = newSpeed;
-        emit speedChanged(m_speed);
-    }
-    
-    // Possibly change direction (small probability)
-    if (static_cast<int>(m_random.generateDouble() * 100) < DIRECTION_CHANGE_PROBABILITY) {
-        // Change direction by -45 to +45 degrees
-        int directionChange = static_cast<int>((m_random.generateDouble() * 2.0 - 1.0) * 45);
-        m_direction = (m_direction + directionChange + 360) % 360;
-        qDebug() << "Direction changed to:" << m_direction << "degrees";
-    }
-    
-    // Move in the current direction
     double radians = m_direction * M_PI / 180.0;
-    double latChange = MOVEMENT_STEP * cos(radians);
-    double lonChange = MOVEMENT_STEP * sin(radians);
-    
-    // Calculate new position based on direction
+    double latChange = MOVEMENT_STEP * m_speed * cos(radians);
+    double lonChange = MOVEMENT_STEP * m_speed * sin(radians);
+
+    // Calculate new position
     double newLat = m_position.latitude() + latChange;
     double newLon = m_position.longitude() + lonChange;
-    
-    // Create and set the new position
     QGeoCoordinate newPosition(newLat, newLon);
-    if (m_position != newPosition) {
-        m_position = newPosition;
-        qDebug() << "Position updated to:" << newPosition.latitude() << newPosition.longitude() 
-                 << "Direction:" << m_direction << "Speed:" << m_speed;
-        emit positionChanged(m_position);
+
+    m_position = newPosition;
+    emit positionChanged(m_position);
+}
+
+// Drains battery at random
+void TelemetryDataSimulator::drainBattery()
+{
+    // Exit early if battery is already at 0
+    if (m_battery <= 0) {
+        return;
     }
+
+    // Generate a random number between 0.0 and 1.0
+    double randomValue = m_random.generateDouble();
+
+    // 2 percent chance of battery drain
+    if (randomValue < 0.02) {
+        m_battery--;
+        emit batteryChanged(m_battery);
+    }
+}
+
+// Updates speed with linear interpolation between initial and target values
+void TelemetryDataSimulator::updateSpeed(int initialSpeed, int targetSpeed, double progress)
+{
+    m_speed = initialSpeed + static_cast<int>((targetSpeed - initialSpeed) * progress);
+    emit speedChanged(m_speed);
+}
+
+// Updates altitude with linear interpolation between initial and target values
+void TelemetryDataSimulator::updateAltitude(int initialAltitude, int targetAltitude, double progress)
+{
+    m_altitude = initialAltitude + static_cast<int>((targetAltitude - initialAltitude) * progress);
+    emit altitudeChanged(m_altitude);
+}
+
+// Makes small adjustments to flight parameters for realistic behavior
+void TelemetryDataSimulator::applyFlightVariations()
+{
+    // Small speed variation
+    int speedAdjust = static_cast<int>((m_random.generateDouble() * 2.0 - 1.0) * 2.0);
+    m_speed = qMax(38, qMin(42, m_speed + speedAdjust));
+    emit speedChanged(m_speed);
+
+    // Small altitude variation
+    int altAdjust = static_cast<int>((m_random.generateDouble() * 2.0 - 1.0) * 3.0);
+    m_altitude = qMax(100, qMin(135, m_altitude + altAdjust));
+    emit altitudeChanged(m_altitude);
+}
+
+void TelemetryDataSimulator::simulateTakeOff()
+{
+    m_direction = m_random.bounded(360);
+
+    // Setup takeoff timer
+    QTimer* takeoffTimer = createSimTimer();
+
+    // Initialize takeoff parameters
+    int elapsedTime = 0;
+
+    // Connect timer to lambda function
+    connect(takeoffTimer, &QTimer::timeout, this, [=]() mutable {
+        // Update elapsed time
+        elapsedTime += 250;
+
+        // Calculate progress
+        double progress = static_cast<double>(elapsedTime) / TAKEOFF_LANDING_DURATION;
+
+        // Update speed - gradually accelerate to takeoff speed
+        updateSpeed(m_speed, 40, progress);
+
+        // Begin altitude increase after rotation speed
+        if (m_speed > 10) {
+            updateAltitude(m_altitude, 120, progress);
+        }
+
+        // Drain battery and update position
+        drainBattery();
+        updatePosition();
+
+        // End takeoff sequence after duration
+        if (elapsedTime >= TAKEOFF_LANDING_DURATION) {
+            takeoffTimer->stop();
+            takeoffTimer->deleteLater();
+
+            // Transition to Flying state
+            m_stateMachine->setCurrentState(UASState::Flying);
+
+            qDebug() << "Takeoff sequence completed - Altitude:" << m_altitude
+                     << "Speed:" << m_speed
+                     << "Position:" << m_position.latitude() << m_position.longitude();
+        }
+    });
+
+    // Start the takeoff timer
+    takeoffTimer->start();
+    qDebug() << "Starting takeoff sequence";
+}
+
+void TelemetryDataSimulator::simulateLanding()
+{
+    // Create landing timer
+    QTimer* landingTimer = createSimTimer();
+
+    int elapsedTime = 0;
+
+    connect(landingTimer, &QTimer::timeout, this, [=]() mutable {
+        // Update elapsed time
+        elapsedTime += 250;
+
+        // Calculate progress as a percentage (0.0 to 1.0)
+        double progress = static_cast<double>(elapsedTime) / TAKEOFF_LANDING_DURATION;
+
+        updateSpeed(m_speed, 0, progress);
+        updateAltitude(m_altitude, 0, progress);
+        updatePosition();
+        drainBattery();
+
+        // Complete landing when done
+        if (elapsedTime >= TAKEOFF_LANDING_DURATION) {
+            // Ensure values are exactly zero
+            m_speed = 0;
+            m_altitude = 0;
+            emit speedChanged(m_speed);
+            emit altitudeChanged(m_altitude);
+
+            // Stop the landing timer
+            landingTimer->stop();
+            landingTimer->deleteLater();
+
+            // Transition to Landed state
+            m_stateMachine->setCurrentState(UASState::Landed);
+        }
+    });
+
+    // Start the landing timer
+    landingTimer->start();
+}
+
+void TelemetryDataSimulator::simulateLoitering()
+{
+    // TODO
+}
+
+void TelemetryDataSimulator::simulateFlying()
+{
+    // Create flight timer
+    QTimer* flightTimer = createSimTimer();
+
+    // Setup transition duration
+    int elapsedTime = 0;
+    const int TRANSITION_DURATION = 3000; // 3 seconds to stabilize at cruise
+
+    connect(flightTimer, &QTimer::timeout, this, [=]() mutable {
+
+        // Check if state has changed to landing - interrupt if so
+        if (m_stateMachine->currentState() == UASState::Landing)
+        {
+            flightTimer->stop();
+            flightTimer->deleteLater();
+            qDebug() << "Flight interrupted - transitioning to landing";
+            return;
+        }
+
+        // Update elapsed time
+        elapsedTime += 250;
+
+        applyFlightVariations();
+
+        // Update position and battery
+        updatePosition();
+        drainBattery();
+    });
+
+    // Start the flight timer
+    flightTimer->start();
 }

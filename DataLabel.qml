@@ -15,7 +15,7 @@ Rectangle
     Text {
         text: label
         color: "#FFFFFF"
-        font.pixelSize: 12
+        font.pixelSize: dataLabel.height / 3
         font.bold: true
         verticalAlignment: Text.AlignVCenter
         anchors.verticalCenter: parent.verticalCenter
@@ -27,7 +27,7 @@ Rectangle
     Text {
         text: value
         color: valueColor
-        font.pixelSize: 14
+        font.pixelSize: dataLabel.height / 3
         font.bold: true
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignRight

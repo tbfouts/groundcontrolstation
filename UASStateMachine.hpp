@@ -37,13 +37,14 @@ public:
     Q_INVOKABLE void loiter();
     Q_INVOKABLE void fly();
     
+    // Make state setting available to TelemetryDataSimulator
+    Q_INVOKABLE void setCurrentState(UASState::State state);
+    
 signals:
     void currentStateChanged(UASState::State state);
     
 private:
     UASState::State m_currentState;
-    
-    void setCurrentState(UASState::State state);
 };
 
 #endif // UASSTATEMACHINE_HPP

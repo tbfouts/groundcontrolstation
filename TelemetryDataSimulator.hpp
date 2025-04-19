@@ -20,32 +20,33 @@ public:
     QGeoCoordinate position() const override;
 
 private slots:
-    void updateTelemetry();
+    void handleStateChange(UASState::State newState);
 
 private:
+    // Control methods for specific states
+    void simulateTakeOff();
+    void simulateLanding();
+    void simulateLoitering();
+    void simulateFlying();
 
-    // Control methods
-    void start();
-    void stop();
-    void setUpdateInterval(int msec);
+    // Helper methods for simulating data
+    QTimer* createSimTimer(int interval = 250);
+    void updatePosition();
+    void drainBattery();
+    void updateSpeed(int initialSpeed, int targetSpeed, double progress);
+    void updateAltitude(int initialAltitude, int targetAltitude, double progress);
+    void applyFlightVariations();
 
-    QTimer m_updateTimer;
     QRandomGenerator m_random;
     
     int m_battery;
     int m_altitude;
     int m_speed;
     QGeoCoordinate m_position;
-    
-    // Movement direction (in degrees, 0-359)
     int m_direction;
     
-    // Simulation parameters
-    static constexpr int DEFAULT_UPDATE_INTERVAL = 100; // ms
-    static constexpr double MAX_ALTITUDE_CHANGE = 10.0;  // meters
-    static constexpr double MAX_SPEED_CHANGE = 5.0;      // m/s
-    static constexpr double MOVEMENT_STEP = 0.0005;      // degrees per update
-    static constexpr int DIRECTION_CHANGE_PROBABILITY = 2; // % chance to change direction per update
+    const double MOVEMENT_STEP = 0.00001;      // degrees per update
+    const int TAKEOFF_LANDING_DURATION = 7000;
 };
 
 #endif // TELEMETRYDATASIMULATOR_HPP
