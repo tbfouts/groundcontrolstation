@@ -14,6 +14,7 @@ public:
         Landed,
         TakingOff,
         Flying,
+        FlyingToWaypoint,
         Loitering,
         Landing
     };

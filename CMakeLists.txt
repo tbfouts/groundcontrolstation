@@ -16,6 +16,8 @@ qt_add_executable(appGroundControlStation
     TelemetryDataSimulator.cpp
     UASStateMachine.hpp
     UASStateMachine.cpp
+    MapController.hpp
+    MapController.cpp
 )
 
 qt_add_resources(appGroundControlStation "images"
@@ -25,6 +27,7 @@ qt_add_resources(appGroundControlStation "images"
         images/TakeOffIcon.png
         images/LandIcon.png
         images/GoToIcon.png
+        images/Waypoint.png
 )
 
 qt_add_qml_module(appGroundControlStation

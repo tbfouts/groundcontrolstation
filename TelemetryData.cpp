@@ -28,11 +28,6 @@ void TelemetryData::land()
     m_stateMachine->land();
 }
 
-void TelemetryData::loiter()
-{
-    m_stateMachine->loiter();
-}
-
 void TelemetryData::fly()
 {
     m_stateMachine->fly();

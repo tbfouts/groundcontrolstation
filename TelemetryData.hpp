@@ -31,8 +31,10 @@ public:
     // State control commands
     Q_INVOKABLE void takeOff();
     Q_INVOKABLE void land();
-    Q_INVOKABLE void loiter();
     Q_INVOKABLE void fly();
+    
+    // Navigation commands
+    Q_INVOKABLE virtual void goTo(const QGeoCoordinate& destination) = 0;
     
 signals:
     void batteryChanged(int battery);

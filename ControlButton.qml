@@ -8,10 +8,13 @@ Item {
     // Public properties
     property string buttonText: "BUTTON"
     property string iconSource: ""
-    property bool isActive: false
-    
-    // Actions for this button
+    property bool disabled: false
+
+    // Emitted when the confirmation slider is confirmed
     signal confirmed()
+
+    // Emitted when this button is clicked initially
+    signal initialClick()
 
     // Whether or not the confirmation slider should be shown
     property bool showConfirmationSlider: false
@@ -30,10 +33,11 @@ Item {
         anchors.right: parent.right
         height: parent.height
         radius: 10
-        
+
         // Dynamic color based on state
-        color: isActive ? activeColor : (mouseArea.containsPress ? pressedColor : (mouseArea.containsMouse ? hoverColor : normalColor))
-        
+        color: mouseArea.containsPress ? pressedColor : normalColor
+        opacity: disabled ? .5 : 1
+
         Text {
             text: buttonText
             color: "#ffffff"
@@ -61,9 +65,13 @@ Item {
         MouseArea {
             id: mouseArea
             anchors.fill: parent
-            hoverEnabled: true
+            enabled: !disabled
             
-            onClicked: showConfirmationSlider = !showConfirmationSlider
+            onClicked:
+            {
+                initialClick()
+                showConfirmationSlider = !showConfirmationSlider
+            }
         }
     }
     

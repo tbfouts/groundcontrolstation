@@ -27,21 +27,23 @@ void UASStateMachine::takeOff()
 
 void UASStateMachine::land()
 {
-    if (m_currentState == UASState::Flying || m_currentState == UASState::Loitering) {
+    if (m_currentState == UASState::Flying || 
+        m_currentState == UASState::FlyingToWaypoint || 
+        m_currentState == UASState::Loitering) {
         setCurrentState(UASState::Landing);
         qDebug() << "Landing...";
     } else {
-        qDebug() << "Cannot land: UAS is not flying or loitering";
+        qDebug() << "Cannot land: UAS is not in a flyable state";
     }
 }
 
 void UASStateMachine::loiter()
 {
-    if (m_currentState == UASState::Flying) {
+    if (m_currentState == UASState::Flying || m_currentState == UASState::FlyingToWaypoint) {
         setCurrentState(UASState::Loitering);
         qDebug() << "Loitering...";
     } else {
-        qDebug() << "Cannot loiter: UAS is not in flying state";
+        qDebug() << "Cannot loiter: UAS is not in a flying state";
     }
 }
 

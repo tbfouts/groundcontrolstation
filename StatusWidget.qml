@@ -44,6 +44,8 @@ Rectangle {
                         return "Taking Off"
                     case UASState.Flying:
                         return "Flying"
+                    case UASState.FlyingToWaypoint:
+                        return "Flying to Waypoint"
                     case UASState.Loitering:
                         return "Loitering"
                     case UASState.Landing:
@@ -58,6 +60,7 @@ Rectangle {
                     case UASState.Landed:
                         return "#4dff64"
                     case UASState.Flying:
+                    case UASState.FlyingToWaypoint:
                     case UASState.Loitering:
                         return "#3cc3ff"
                     case UASState.TakingOff:

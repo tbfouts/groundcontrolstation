@@ -18,6 +18,7 @@ public:
     int altitude() const override;
     int speed() const override;
     QGeoCoordinate position() const override;
+    void goTo(const QGeoCoordinate& destination) override;
 
 private slots:
     void handleStateChange(UASState::State newState);
@@ -26,7 +27,7 @@ private:
     // Control methods for specific states
     void simulateTakeOff();
     void simulateLanding();
-    void simulateLoitering();
+    void simulateLoitering(const QGeoCoordinate& centerPoint, double radius = 100);
     void simulateFlying();
 
     // Helper methods for simulating data
@@ -36,6 +37,10 @@ private:
     void updateSpeed(int initialSpeed, int targetSpeed, double progress);
     void updateAltitude(int initialAltitude, int targetAltitude, double progress);
     void applyFlightVariations();
+    void flyToWaypoint(const QGeoCoordinate& destination);
+    
+    // Navigation members
+    QGeoCoordinate m_destinationCoordinate;
 
     QRandomGenerator m_random;
     
