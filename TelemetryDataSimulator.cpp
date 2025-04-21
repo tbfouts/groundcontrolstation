@@ -4,6 +4,19 @@
 #include <QJSEngine>
 #include <QtMath>
 
+/**
+ * @brief Constructs a TelemetryDataSimulator with default values
+ * @param parent The parent QObject
+ * 
+ * Initializes the simulator with the following default values:
+ * - Battery: 100%
+ * - Altitude: 0 meters
+ * - Speed: 0 m/s
+ * - Position: Detroit, MI (42.3314, -83.0458)
+ * - Direction: 45 degrees
+ * - Loiter radius: 100 meters
+ * - Loiter direction: Clockwise
+ */
 TelemetryDataSimulator::TelemetryDataSimulator(QObject* parent)
     : TelemetryData(parent)
     , m_random(QRandomGenerator::global()->generate())
@@ -20,35 +33,65 @@ TelemetryDataSimulator::TelemetryDataSimulator(QObject* parent)
             this, &TelemetryDataSimulator::handleStateChange);
 }
 
+/**
+ * @brief Destructor
+ */
 TelemetryDataSimulator::~TelemetryDataSimulator()
 {
 }
 
+/**
+ * @brief Gets the current simulated battery level
+ * @return Battery percentage (0-100)
+ */
 int TelemetryDataSimulator::battery() const
 {
     return m_battery;
 }
 
+/**
+ * @brief Gets the current simulated altitude
+ * @return Altitude in meters
+ */
 int TelemetryDataSimulator::altitude() const
 {
     return m_altitude;
 }
 
+/**
+ * @brief Gets the current simulated speed
+ * @return Speed in meters per second
+ */
 int TelemetryDataSimulator::speed() const
 {
     return m_speed;
 }
 
+/**
+ * @brief Gets the current simulated position
+ * @return The current geographical coordinates
+ */
 QGeoCoordinate TelemetryDataSimulator::position() const
 {
     return m_position;
 }
 
+/**
+ * @brief Gets the current loiter radius
+ * @return Loiter radius in meters
+ */
 int TelemetryDataSimulator::loiterRadius() const
 {
     return m_loiterRadius;
 }
 
+/**
+ * @brief Sets the loiter radius
+ * @param radius The new loiter radius in meters
+ * 
+ * If the UAS is currently in loitering state, the loiter pattern
+ * will be immediately updated to use the new radius.
+ */
 void TelemetryDataSimulator::setLoiterRadius(int radius)
 {
     if (m_loiterRadius != radius) {
@@ -62,11 +105,22 @@ void TelemetryDataSimulator::setLoiterRadius(int radius)
     }
 }
 
+/**
+ * @brief Gets the current loiter direction
+ * @return true for clockwise, false for counter-clockwise
+ */
 bool TelemetryDataSimulator::loiterClockwise() const
 {
     return m_loiterClockwise;
 }
 
+/**
+ * @brief Sets the loiter direction
+ * @param clockwise true for clockwise, false for counter-clockwise
+ * 
+ * If the UAS is currently in loitering state, the loiter pattern
+ * will be immediately updated to use the new direction.
+ */
 void TelemetryDataSimulator::setLoiterClockwise(bool clockwise)
 {
     if (m_loiterClockwise != clockwise) {
@@ -82,6 +136,13 @@ void TelemetryDataSimulator::setLoiterClockwise(bool clockwise)
     }
 }
 
+/**
+ * @brief Commands the simulated UAS to fly to a destination
+ * @param destination The geographical coordinates to fly to
+ * 
+ * If the UAS is currently loitering, it will switch to flying mode
+ * before navigating to the new destination.
+ */
 void TelemetryDataSimulator::goTo(const QGeoCoordinate& destination)
 {
     // Only allow goTo when flying or loitering
@@ -102,6 +163,13 @@ void TelemetryDataSimulator::goTo(const QGeoCoordinate& destination)
     flyToWaypoint(destination);
 }
 
+/**
+ * @brief Handles state changes from the UAS state machine
+ * @param newState The new state to transition to
+ * 
+ * This method initiates the appropriate simulation behavior
+ * based on the new state of the UAS.
+ */
 void TelemetryDataSimulator::handleStateChange(UASState::State newState)
 {
     qDebug() << "TelemetryDataSimulator: State changed to" << newState;
@@ -136,7 +204,11 @@ void TelemetryDataSimulator::handleStateChange(UASState::State newState)
     }
 }
 
-// Creates a simulation timer with the specified interval
+/**
+ * @brief Creates a simulation timer with the specified interval
+ * @param interval The timer interval in milliseconds
+ * @return A configured QTimer pointer
+ */
 QTimer* TelemetryDataSimulator::createSimTimer(int interval)
 {
     QTimer* timer = new QTimer(this);
@@ -144,6 +216,12 @@ QTimer* TelemetryDataSimulator::createSimTimer(int interval)
     return timer;
 }
 
+/**
+ * @brief Updates the simulated position based on current direction and speed
+ * 
+ * The position is updated by calculating the movement in both latitude and
+ * longitude based on the current speed and direction.
+ */
 void TelemetryDataSimulator::updatePosition()
 {
     double radians = m_direction * M_PI / 180.0;
@@ -159,7 +237,12 @@ void TelemetryDataSimulator::updatePosition()
     emit positionChanged(m_position);
 }
 
-// Drains battery at random
+/**
+ * @brief Simulates random battery drain
+ * 
+ * There is a 2% chance on each call that the battery will drain by 1%.
+ * This is used to simulate gradual battery usage during flight.
+ */
 void TelemetryDataSimulator::drainBattery()
 {
     // Exit early if battery is already at 0
@@ -177,21 +260,36 @@ void TelemetryDataSimulator::drainBattery()
     }
 }
 
-// Updates speed with linear interpolation between initial and target values
+/**
+ * @brief Updates speed with linear interpolation
+ * @param initialSpeed The starting speed
+ * @param targetSpeed The target speed
+ * @param progress The progress as a value from 0.0 to 1.0
+ */
 void TelemetryDataSimulator::updateSpeed(int initialSpeed, int targetSpeed, double progress)
 {
     m_speed = initialSpeed + static_cast<int>((targetSpeed - initialSpeed) * progress);
     emit speedChanged(m_speed);
 }
 
-// Updates altitude with linear interpolation between initial and target values
+/**
+ * @brief Updates altitude with linear interpolation
+ * @param initialAltitude The starting altitude
+ * @param targetAltitude The target altitude
+ * @param progress The progress as a value from 0.0 to 1.0
+ */
 void TelemetryDataSimulator::updateAltitude(int initialAltitude, int targetAltitude, double progress)
 {
     m_altitude = initialAltitude + static_cast<int>((targetAltitude - initialAltitude) * progress);
     emit altitudeChanged(m_altitude);
 }
 
-// Makes small adjustments to flight parameters for realistic behavior
+/**
+ * @brief Applies random variations to flight parameters
+ * 
+ * Adds small random variations to speed and altitude to simulate
+ * realistic flight behavior.
+ */
 void TelemetryDataSimulator::applyFlightVariations()
 {
     // Small speed variation
@@ -205,6 +303,14 @@ void TelemetryDataSimulator::applyFlightVariations()
     emit altitudeChanged(m_altitude);
 }
 
+/**
+ * @brief Simulates flying to a specific waypoint
+ * @param destination The geographical coordinates to fly to
+ * 
+ * Sets up a timer that continuously updates the UAS position as it
+ * flies towards the destination. When the destination is reached
+ * (within 50 meters), the UAS will transition to loitering state.
+ */
 void TelemetryDataSimulator::flyToWaypoint(const QGeoCoordinate& destination)
 {
     // Store the destination
@@ -259,6 +365,14 @@ void TelemetryDataSimulator::flyToWaypoint(const QGeoCoordinate& destination)
     flyToWaypointTimer->start();
 }
 
+/**
+ * @brief Simulates the takeoff sequence
+ * 
+ * Initiates a simulation of the UAS taking off from the ground.
+ * The sequence includes gradual acceleration and altitude increase
+ * over the defined TAKEOFF_LANDING_DURATION. When complete, the UAS
+ * transitions to the Flying state.
+ */
 void TelemetryDataSimulator::simulateTakeOff()
 {
     m_direction = m_random.bounded(360);
@@ -308,6 +422,14 @@ void TelemetryDataSimulator::simulateTakeOff()
     qDebug() << "Starting takeoff sequence";
 }
 
+/**
+ * @brief Simulates the landing sequence
+ * 
+ * Initiates a simulation of the UAS landing on the ground.
+ * The sequence includes gradual deceleration and altitude decrease
+ * over the defined TAKEOFF_LANDING_DURATION. When complete, the UAS
+ * transitions to the Landed state.
+ */
 void TelemetryDataSimulator::simulateLanding()
 {
     // Create landing timer
@@ -348,6 +470,17 @@ void TelemetryDataSimulator::simulateLanding()
     landingTimer->start();
 }
 
+/**
+ * @brief Simulates loitering around a center point
+ * @param centerPoint The center point of the loiter pattern
+ * 
+ * Initiates a simulation of the UAS loitering (circling) around the
+ * specified center point. The radius and direction of the loiter pattern
+ * are determined by the m_loiterRadius and m_loiterClockwise properties.
+ * 
+ * The UAS maintains a lower speed while loitering and keeps a more
+ * consistent altitude than during normal flight.
+ */
 void TelemetryDataSimulator::simulateLoitering(const QGeoCoordinate& centerPoint)
 {
     m_stateMachine->loiter();
@@ -425,6 +558,14 @@ void TelemetryDataSimulator::simulateLoitering(const QGeoCoordinate& centerPoint
     loiterTimer->start();
 }
 
+/**
+ * @brief Simulates normal flying behavior
+ * 
+ * Initiates a simulation of the UAS flying in normal cruise mode.
+ * The speed and altitude are maintained within standard cruise ranges
+ * with small random variations to simulate realistic flight behavior.
+ * This simulation continues until the UAS state changes.
+ */
 void TelemetryDataSimulator::simulateFlying()
 {
     // Create flight timer

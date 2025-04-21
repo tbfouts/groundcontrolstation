@@ -4,12 +4,30 @@
 #include <QObject>
 #include <QDebug>
 
-// Define UAS flight states as an enum
+/**
+ * @class UASState
+ * @brief Defines the possible states for the Unmanned Aerial System (UAS)
+ * 
+ * This class provides an enumeration of the possible flight states
+ * that the UAS can be in. The State enum is registered with the Qt
+ * meta-object system to make it available to QML.
+ */
 class UASState : public QObject
 {
     Q_OBJECT
     
 public:
+    /**
+     * @enum State
+     * @brief The various states a UAS can be in
+     * 
+     * @value Landed The UAS is on the ground
+     * @value TakingOff The UAS is in the process of taking off
+     * @value Flying The UAS is flying normally
+     * @value FlyingToWaypoint The UAS is navigating to a specific waypoint
+     * @value Loitering The UAS is circling around a point
+     * @value Landing The UAS is in the process of landing
+     */
     enum State {
         Landed,
         TakingOff,
@@ -21,30 +39,87 @@ public:
     Q_ENUM(State)
 };
 
+/**
+ * @class UASStateMachine
+ * @brief Manages the state transitions for the Unmanned Aerial System
+ * 
+ * This class implements a state machine that controls the valid transitions
+ * between different flight states of the UAS. It ensures that state transitions
+ * follow a logical sequence (e.g., the UAS can only take off if it's landed).
+ */
 class UASStateMachine : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(UASState::State currentState READ currentState NOTIFY currentStateChanged)
     
 public:
+    /**
+     * @brief Constructs a UASStateMachine
+     * @param parent The parent QObject
+     */
     explicit UASStateMachine(QObject* parent = nullptr);
+    
+    /**
+     * @brief Destructor
+     */
     virtual ~UASStateMachine();
     
+    /**
+     * @brief Gets the current state of the UAS
+     * @return The current state
+     */
     UASState::State currentState() const;
     
-    // State change commands
+    /**
+     * @brief Commands the UAS to take off
+     * 
+     * Transitions from Landed to TakingOff state if currently landed.
+     * Otherwise, the command is ignored.
+     */
     Q_INVOKABLE void takeOff();
+    
+    /**
+     * @brief Commands the UAS to land
+     * 
+     * Transitions to Landing state if currently in a flyable state
+     * (Flying, FlyingToWaypoint, or Loitering). Otherwise, the command is ignored.
+     */
     Q_INVOKABLE void land();
+    
+    /**
+     * @brief Commands the UAS to loiter around the current position
+     * 
+     * Transitions to Loitering state if currently in a flying state
+     * (Flying or FlyingToWaypoint). Otherwise, the command is ignored.
+     */
     Q_INVOKABLE void loiter();
+    
+    /**
+     * @brief Commands the UAS to fly normally
+     * 
+     * Transitions to Flying state if currently Loitering or TakingOff.
+     * Otherwise, the command is ignored.
+     */
     Q_INVOKABLE void fly();
     
-    // Make state setting available to TelemetryDataSimulator
+    /**
+     * @brief Directly sets the current state
+     * @param state The new state to set
+     * 
+     * This method is primarily used by the TelemetryDataSimulator to
+     * update the state machine based on simulation events.
+     */
     Q_INVOKABLE void setCurrentState(UASState::State state);
     
 signals:
+    /**
+     * @brief Emitted when the UAS state changes
+     * @param state The new state
+     */
     void currentStateChanged(UASState::State state);
     
 private:
+    /** @brief The current state of the UAS */
     UASState::State m_currentState;
 };
 
