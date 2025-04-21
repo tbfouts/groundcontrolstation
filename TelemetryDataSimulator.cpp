@@ -12,6 +12,8 @@ TelemetryDataSimulator::TelemetryDataSimulator(QObject* parent)
     , m_speed(0)
     , m_position(42.3314, -83.0458) // Default position: Detroit, MI
     , m_direction(45)
+    , m_loiterRadius(100)
+    , m_loiterClockwise(true)
 {
     // Connect to state changes
     connect(m_stateMachine, &UASStateMachine::currentStateChanged,
@@ -40,6 +42,44 @@ int TelemetryDataSimulator::speed() const
 QGeoCoordinate TelemetryDataSimulator::position() const
 {
     return m_position;
+}
+
+int TelemetryDataSimulator::loiterRadius() const
+{
+    return m_loiterRadius;
+}
+
+void TelemetryDataSimulator::setLoiterRadius(int radius)
+{
+    if (m_loiterRadius != radius) {
+        m_loiterRadius = radius;
+        emit loiterRadiusChanged(m_loiterRadius);
+        
+        // If currently loitering, update the loiter pattern with the new radius
+        if (m_stateMachine->currentState() == UASState::Loitering) {
+            simulateLoitering(m_destinationCoordinate);
+        }
+    }
+}
+
+bool TelemetryDataSimulator::loiterClockwise() const
+{
+    return m_loiterClockwise;
+}
+
+void TelemetryDataSimulator::setLoiterClockwise(bool clockwise)
+{
+    if (m_loiterClockwise != clockwise) {
+        m_loiterClockwise = clockwise;
+
+        qDebug() << "Loiter clockwise:" << m_loiterClockwise;
+        emit loiterClockwiseChanged(m_loiterClockwise);
+        
+        // If currently loitering, update the loiter pattern with the new direction
+        if (m_stateMachine->currentState() == UASState::Loitering) {
+            simulateLoitering(m_destinationCoordinate);
+        }
+    }
 }
 
 void TelemetryDataSimulator::goTo(const QGeoCoordinate& destination)
@@ -308,7 +348,7 @@ void TelemetryDataSimulator::simulateLanding()
     landingTimer->start();
 }
 
-void TelemetryDataSimulator::simulateLoitering(const QGeoCoordinate& centerPoint, double radius)
+void TelemetryDataSimulator::simulateLoitering(const QGeoCoordinate& centerPoint)
 {
     m_stateMachine->loiter();
 
@@ -319,8 +359,8 @@ void TelemetryDataSimulator::simulateLoitering(const QGeoCoordinate& centerPoint
     // Convert radius in meters to degrees
     double lat = centerPoint.latitude();
     double lon = centerPoint.longitude();
-    double latRadius = radius / 111000.0; // 1 degree lat is about 111km
-    double lonRadius = radius / (111000.0 * cos(lat * M_PI / 180.0)); // Adjust for longitude
+    double latRadius = m_loiterRadius / 111000.0; // 1 degree lat is about 111km
+    double lonRadius = m_loiterRadius / (111000.0 * cos(lat * M_PI / 180.0)); // Adjust for longitude
 
     // Calculate 360 points around the circle
     for (int angle = 0; angle < 360; angle++) {
@@ -333,8 +373,11 @@ void TelemetryDataSimulator::simulateLoitering(const QGeoCoordinate& centerPoint
         // Add point to the vector
         circlePoints.append(QGeoCoordinate(newLat, newLon));
 
-        // Direction is tangent to the circle (90 degrees offset)
-        directions.append(static_cast<int>(fmod(angle + 90, 360.0)));
+        // Direction is tangent to the circle
+        // If clockwise, add 90 degrees, if counterclockwise, subtract 90
+        int directionOffset = m_loiterClockwise ? 90 : -90;
+        int tangentDirection = static_cast<int>(fmod(angle + directionOffset, 360.0));
+        directions.append(tangentDirection);
     }
 
     // Create loiter timer
@@ -354,7 +397,12 @@ void TelemetryDataSimulator::simulateLoitering(const QGeoCoordinate& centerPoint
         m_direction = directions[currentPointIndex];
 
         // Update index for next point (circular)
-        currentPointIndex = (currentPointIndex + 1) % 360;
+        // Direction depends on the loiter direction
+        if (m_loiterClockwise) {
+            currentPointIndex = (currentPointIndex + 1) % 360;
+        } else {
+            currentPointIndex = (currentPointIndex - 1 + 360) % 360;
+        }
 
         // Emit position change
         emit positionChanged(m_position);

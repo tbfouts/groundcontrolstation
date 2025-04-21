@@ -78,27 +78,6 @@ Item {
             }
         }
 
-        Text
-        {
-            id: infoMessage
-
-            text: "Select a point on the map"
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.margins: 10
-            font.pixelSize: 32
-            color: "black"
-            visible: MapController.isInteractive
-
-            Rectangle
-            {
-                anchors.fill: parent
-                color: "gray"
-                opacity: .5
-                radius: 5
-            }
-        }
-
         Column
         {
             id: mapControls

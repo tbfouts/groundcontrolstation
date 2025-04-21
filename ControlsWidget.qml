@@ -7,8 +7,6 @@ Rectangle {
     id: controlsWidget
     color: "#1a1a1a"
     radius: 10
-    border.color: "#2a2a2a"
-    border.width: 1
 
     ColumnLayout {
         anchors.fill: parent
@@ -67,13 +65,113 @@ Rectangle {
             onInitialClick:
             {
                 MapController.isInteractive = true
+                goToWaypointConfirmation.visible = true
+            }
+        }
+    }
+
+    Rectangle
+    {
+        id: goToWaypointConfirmation
+        color: "#1a1a1a"
+        radius: 10
+        anchors.fill: parent
+        visible: false
+
+        Column
+        {
+            anchors.centerIn: parent
+            spacing: 25
+            width: parent.width * .75
+
+            Text {
+                id: pointOnMapTxt
+                text: qsTr("SELECT A POINT ON THE MAP")
+                color: "white"
+                font.pixelSize: 22
+                font.bold: true
             }
 
-            onConfirmed:
+            Text {
+                id: latLonTxt
+                text: MapController.targetCoordinates.latitude.toFixed(6) + "°, " + MapController.targetCoordinates.longitude.toFixed(6) + "°"
+                color: "white"
+                font.pixelSize: 18
+                font.bold: true
+            }
+
+            Text {
+                id: loiterRadiusTxt
+                text: qsTr("LOITER RADIUS: " + Math.floor(loiterRadiusSlider.value) + "m")
+                color: "white"
+                font.pixelSize: 22
+                font.bold: true
+            }
+
+            Slider
             {
-                console.log("Navigating to selected point");
-                TelemetryData.goTo(MapController.targetCoordinates)
-                MapController.isInteractive = false
+                id: loiterRadiusSlider
+                from: 5
+                to: 250
+                width: parent.width
+
+                onValueChanged: TelemetryData.loiterRadius = Math.floor(value)
+            }
+
+            Text {
+                id: loiterDirectionTxt
+                text: qsTr("LOITER DIRECTION:")
+                color: "white"
+                font.pixelSize: 22
+                font.bold: true
+            }
+
+            Row
+            {
+                spacing: 25
+
+                Column
+                {
+
+                    RadioButton
+                    {
+                        text: "CLOCKWISE"
+                        font.pixelSize: 18
+                        font.bold: true
+                        checked: TelemetryData.loiterClockwise
+
+                        onCheckedChanged:
+                        {
+                            TelemetryData.loiterClockwise = checked
+                        }
+                    }
+
+                    RadioButton
+                    {
+                        text: "COUNTER CLOCKWISE"
+                        font.pixelSize: 18
+                        font.bold: true
+                        checked: !TelemetryData.loiterClockwise
+
+                        onCheckedChanged:
+                        {
+                            TelemetryData.loiterClockwise = !checked
+                        }
+                    }
+                }
+            }
+
+            ConfirmationSlider
+            {
+                width: parent.width
+
+                onConfirmed:
+                {
+                    goToWaypointConfirmation.visible = false
+                    gotoButton.showConfirmationSlider = false
+                    TelemetryData.goTo(MapController.targetCoordinates)
+                    MapController.isInteractive = false
+                }
             }
         }
     }

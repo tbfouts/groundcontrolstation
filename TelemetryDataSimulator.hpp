@@ -19,6 +19,12 @@ public:
     int speed() const override;
     QGeoCoordinate position() const override;
     void goTo(const QGeoCoordinate& destination) override;
+    
+    // Loiter properties implementation
+    int loiterRadius() const override;
+    void setLoiterRadius(int radius) override;
+    bool loiterClockwise() const override;
+    void setLoiterClockwise(bool clockwise) override;
 
 private slots:
     void handleStateChange(UASState::State newState);
@@ -27,7 +33,7 @@ private:
     // Control methods for specific states
     void simulateTakeOff();
     void simulateLanding();
-    void simulateLoitering(const QGeoCoordinate& centerPoint, double radius = 100);
+    void simulateLoitering(const QGeoCoordinate& centerPoint);
     void simulateFlying();
 
     // Helper methods for simulating data
@@ -49,6 +55,10 @@ private:
     int m_speed;
     QGeoCoordinate m_position;
     int m_direction;
+    
+    // Loiter properties
+    int m_loiterRadius;
+    bool m_loiterClockwise;
     
     const double MOVEMENT_STEP = 0.00001;      // degrees per update
     const int TAKEOFF_LANDING_DURATION = 7000;
