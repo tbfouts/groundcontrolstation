@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import QtLocation
 import QtPositioning
 import GroundControlStation 1.0
@@ -63,7 +64,7 @@ Item {
                 if (MapController.isInteractive) {
                     // In navigation mode, use the coordinate for destination
                     mapWidgetRoot.handleMapClick(coordinate)
-                    
+
                     // Add a temporary marker at the clicked location
                     destinationMarker.coordinate = coordinate
                     MapController.targetCoordinates = coordinate
@@ -79,11 +80,14 @@ Item {
 
         Text
         {
+            id: infoMessage
+
             text: "Select a point on the map"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.margins: 10
             font.pixelSize: 32
+            color: "black"
             visible: MapController.isInteractive
 
             Rectangle
@@ -95,48 +99,49 @@ Item {
             }
         }
 
-        Button {
-            id: zoomInBtn
-            text: "+"
-            onClicked: MapController.zoomLevel = MapController.zoomLevel + 1
-            anchors.right: parent.right
-            anchors.bottom: zoomOutBtn.top
-            anchors.margins: 10
-            width: height
-            font.pixelSize: 32
+        Column
+        {
+            id: mapControls
 
-            background: Rectangle {
-                color:  "dark gray"
-                radius: 25
-            }
-        }
-
-        Button {
-            id: zoomOutBtn
-            text: "-"
-            onClicked: MapController.zoomLevel = MapController.zoomLevel - 1
-            anchors.right: parent.right
             anchors.bottom: parent.bottom
+            anchors.right: parent.right
             anchors.margins: 10
-            width: height
-            font.pixelSize: 32
+            spacing: 15
 
-            background: Rectangle {
-                color:  "dark gray"
-                radius: 25
+            MapButton
+            {
+                id: snapToUasBtn
+                iconSource: "/images/SnapToUAS.png"
+                visible: false // functionality to be added as a later improvement
+            }
+
+            MapButton
+            {
+                id: zoomInBtn
+                iconSource: "/images/Plus.png"
+                onClicked: MapController.zoomLevel = MapController.zoomLevel + 1
+            }
+
+            MapButton
+            {
+                id: zoomOutBtn
+                iconSource: "/images/Minus.png"
+                onClicked: MapController.zoomLevel = MapController.zoomLevel - 1
             }
         }
 
-        // UAS position marker
-        MapQuickItem {
+        MapQuickItem
+        {
             id: uasMarker
             anchorPoint.x: uasIcon.width/2
             anchorPoint.y: uasIcon.height/2
             coordinate: TelemetryData.position
 
             // Animation for center coordinate changes
-            Behavior on coordinate {
-                CoordinateAnimation {
+            Behavior on coordinate
+            {
+                CoordinateAnimation
+                {
                     duration: 1000
                 }
             }
@@ -151,7 +156,8 @@ Item {
             }
         }
         
-        MapQuickItem {
+        MapQuickItem
+        {
             id: destinationMarker
             visible: MapController.isInteractive
             anchorPoint.x: sourceItem.width / 2
@@ -174,7 +180,8 @@ Item {
         }
         
         // Path to destination when navigating
-        MapPolyline {
+        MapPolyline
+        {
             id: navPath
             line.width: 4
             line.color: "#de2828"

@@ -28,6 +28,9 @@ qt_add_resources(appGroundControlStation "images"
         images/LandIcon.png
         images/GoToIcon.png
         images/Waypoint.png
+        images/SnapToUAS.png
+        images/Plus.png
+        images/Minus.png
 )
 
 qt_add_qml_module(appGroundControlStation
@@ -42,6 +45,7 @@ qt_add_qml_module(appGroundControlStation
         ControlButton.qml
         DataLabel.qml
         ConfirmationSlider.qml
+        MapButton.qml
     SOURCES
         TelemetryData.hpp
         TelemetryData.cpp
