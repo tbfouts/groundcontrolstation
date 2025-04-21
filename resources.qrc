@@ -2,5 +2,14 @@
 <RCC>
     <qresource prefix="/">
         <file>images/UASicon.png</file>
+        <file>src/frontend/Main.qml</file>
+        <file>src/frontend/MapWidget.qml</file>
+        <file>src/frontend/TelemetryWidget.qml</file>
+        <file>src/frontend/ControlsWidget.qml</file>
+        <file>src/frontend/StatusWidget.qml</file>
+        <file>src/frontend/ControlButton.qml</file>
+        <file>src/frontend/DataLabel.qml</file>
+        <file>src/frontend/ConfirmationSlider.qml</file>
+        <file>src/frontend/MapButton.qml</file>
     </qresource>
 </RCC>

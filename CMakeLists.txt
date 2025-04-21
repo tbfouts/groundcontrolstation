@@ -8,16 +8,26 @@ find_package(Qt6 REQUIRED COMPONENTS Quick Location)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
+# Define backend source files
+set(BACKEND_SOURCES
+    src/backend/TelemetryData.hpp
+    src/backend/TelemetryData.cpp
+    src/backend/TelemetryDataSimulator.hpp
+    src/backend/TelemetryDataSimulator.cpp
+    src/backend/UASStateMachine.hpp
+    src/backend/UASStateMachine.cpp
+    src/backend/MapController.hpp
+    src/backend/MapController.cpp
+)
+
+# Include source directories
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/backend
+)
+
 qt_add_executable(appGroundControlStation
     main.cpp
-    TelemetryData.hpp
-    TelemetryData.cpp
-    TelemetryDataSimulator.hpp
-    TelemetryDataSimulator.cpp
-    UASStateMachine.hpp
-    UASStateMachine.cpp
-    MapController.hpp
-    MapController.cpp
+    ${BACKEND_SOURCES}
 )
 
 qt_add_resources(appGroundControlStation "images"
@@ -33,26 +43,26 @@ qt_add_resources(appGroundControlStation "images"
         images/Minus.png
 )
 
+# Define frontend QML files
+set(FRONTEND_QML_FILES
+    src/frontend/Main.qml
+    src/frontend/MapWidget.qml
+    src/frontend/TelemetryWidget.qml
+    src/frontend/ControlsWidget.qml
+    src/frontend/StatusWidget.qml
+    src/frontend/ControlButton.qml
+    src/frontend/DataLabel.qml
+    src/frontend/ConfirmationSlider.qml
+    src/frontend/MapButton.qml
+)
+
 qt_add_qml_module(appGroundControlStation
     URI GroundControlStation
     VERSION 1.0
     QML_FILES
-        Main.qml
-        MapWidget.qml
-        TelemetryWidget.qml
-        ControlsWidget.qml
-        StatusWidget.qml
-        ControlButton.qml
-        DataLabel.qml
-        ConfirmationSlider.qml
-        MapButton.qml
+        ${FRONTEND_QML_FILES}
     SOURCES
-        TelemetryData.hpp
-        TelemetryData.cpp
-        TelemetryDataSimulator.hpp
-        TelemetryDataSimulator.cpp
-        UASStateMachine.hpp
-        UASStateMachine.cpp
+        ${BACKEND_SOURCES}
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
