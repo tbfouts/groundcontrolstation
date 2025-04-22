@@ -81,14 +81,14 @@ Rectangle {
         Column
         {
             anchors.centerIn: parent
-            spacing: 25
+            spacing: 2
             width: parent.width * .75
 
             Text {
                 id: pointOnMapTxt
                 text: qsTr("SELECT A POINT ON THE MAP")
                 color: "white"
-                font.pixelSize: 22
+                font.pixelSize: 16
                 font.bold: true
             }
 
@@ -96,7 +96,7 @@ Rectangle {
                 id: latLonTxt
                 text: MapController.targetCoordinates.latitude.toFixed(6) + "°, " + MapController.targetCoordinates.longitude.toFixed(6) + "°"
                 color: "white"
-                font.pixelSize: 18
+                font.pixelSize: 12
                 font.bold: true
             }
 
@@ -104,7 +104,7 @@ Rectangle {
                 id: loiterRadiusTxt
                 text: qsTr("LOITER RADIUS: " + Math.floor(loiterRadiusSlider.value) + "m")
                 color: "white"
-                font.pixelSize: 22
+                font.pixelSize: 16
                 font.bold: true
             }
 
@@ -122,41 +122,36 @@ Rectangle {
                 id: loiterDirectionTxt
                 text: qsTr("LOITER DIRECTION:")
                 color: "white"
-                font.pixelSize: 22
+                font.pixelSize: 16
                 font.bold: true
             }
 
             Row
             {
-                spacing: 25
 
-                Column
+                RadioButton
                 {
+                    text: "CLOCKWISE"
+                    font.pixelSize: 12
+                    font.bold: true
+                    checked: TelemetryData.loiterClockwise
 
-                    RadioButton
+                    onCheckedChanged:
                     {
-                        text: "CLOCKWISE"
-                        font.pixelSize: 18
-                        font.bold: true
-                        checked: TelemetryData.loiterClockwise
-
-                        onCheckedChanged:
-                        {
-                            TelemetryData.loiterClockwise = checked
-                        }
+                        TelemetryData.loiterClockwise = checked
                     }
+                }
 
-                    RadioButton
+                RadioButton
+                {
+                    text: "COUNTER CLOCKWISE"
+                    font.pixelSize: 12
+                    font.bold: true
+                    checked: !TelemetryData.loiterClockwise
+
+                    onCheckedChanged:
                     {
-                        text: "COUNTER CLOCKWISE"
-                        font.pixelSize: 18
-                        font.bold: true
-                        checked: !TelemetryData.loiterClockwise
-
-                        onCheckedChanged:
-                        {
-                            TelemetryData.loiterClockwise = !checked
-                        }
+                        TelemetryData.loiterClockwise = !checked
                     }
                 }
             }
@@ -164,6 +159,7 @@ Rectangle {
             ConfirmationSlider
             {
                 width: parent.width
+                actionText: "GO TO WAYPOINT"
 
                 onConfirmed:
                 {
