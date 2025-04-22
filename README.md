@@ -84,10 +84,8 @@ The project is organized into the following structure:
 
 ### Architecture Improvements
 - **Hardware Abstraction Layer**: Replace direct simulation with HAL to allow real hardware integration
-- **Plugin System**: Create a plugin architecture to support different vehicle types and communication protocols
-- **Data Services**: Implement service locator pattern for accessing different data services (weather, airspace, etc.)
-- **Command Pattern**: Implement command pattern for UAS controls with undo/redo capability
-- **Observer Pattern**: Replace direct signal connections with a more flexible observer implementation
+- **Plugin System**: Create an architecture to support different vehicle types and communication protocols
+- **Revamep Architecture**: Current architecture was designed with simulation in mind and has many limitations.
 
 ### Feature Enhancements
 - **Mission Planning**: Add mission planning with multiple waypoints and mission items
@@ -101,13 +99,3 @@ The project is organized into the following structure:
 - **Test Coverage**: Expand unit tests to cover all components
 - **CI/CD Pipeline**: Set up continuous integration and deployment
 - **Documentation**: Generate API documentation with Doxygen
-- **Settings System**: Add persistent settings storage and configuration UI
-- **Cross-Platform Support**: Ensure compatibility with Windows, macOS, Linux, iOS, and Android
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
