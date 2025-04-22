@@ -80,6 +80,46 @@ The project is organized into the following structure:
 - Loitering functionality with configurable radius and direction
 - Simulated flight physics with realistic transitions
 
+## Testing
+
+### GUI Tests with Squish
+
+This project includes automated GUI tests using the Squish testing framework.
+
+#### Prerequisites
+
+- Squish for Qt installed (version 6.7 or higher)
+- Squish license configured
+- `squishrunner` and `squishserver` in your PATH
+
+#### Running Squish Tests
+
+1. Start the Squish server:
+   ```
+   squishserver --daemon
+   ```
+
+2. Run all tests:
+   ```
+   cd squish_tests
+   squishrunner --testsuite suite_GroundControlStation --testcase tc_all
+   ```
+
+3. Run a specific test case:
+   ```
+   squishrunner --testsuite suite_GroundControlStation --testcase tc_TakeoffAndLand
+   ```
+
+4. Run tests with detailed output:
+   ```
+   squishrunner --testsuite suite_GroundControlStation --testcase tc_all --reportgen html:TakeoffTestReport
+   ```
+
+5. View the test report:
+   ```
+   open TakeoffTestReport/index.html
+   ```
+
 ## Future Improvement Plans
 
 ### Architecture Improvements
