@@ -87,3 +87,6 @@ install(TARGETS appGroundControlStation
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# Add the tests directory
+add_subdirectory(tests)

@@ -82,6 +82,38 @@ The project is organized into the following structure:
 
 ## Testing
 
+### Unit Tests
+
+To run the UASStateMachine unit tests:
+
+1. Configure and build the tests:
+   ```
+   cd tests
+   mkdir -p build && cd build
+   cmake ..
+   make
+   ```
+2. Run the tests:
+   ```
+   ./testGroundControlStation
+   ```
+   
+3. Run with verbose output:
+   ```
+   ./testGroundControlStation -v
+   ```
+   
+4. Run specific test functions:
+   ```
+   ./testGroundControlStation -functions testStateTransitions
+   ```
+
+The current tests cover:
+- UASStateMachine state transitions
+- Signal emission during state changes
+- Proper enumeration values
+- Command methods (takeOff, land, loiter, fly)
+
 ### GUI Tests with Squish
 
 This project includes automated GUI tests using the Squish testing framework.
