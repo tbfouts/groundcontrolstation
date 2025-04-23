@@ -114,8 +114,6 @@ Rectangle {
                 from: 5
                 to: 250
                 width: parent.width
-
-                onValueChanged: TelemetryData.loiterRadius = Math.floor(value)
             }
 
             Text {
@@ -131,28 +129,20 @@ Rectangle {
 
                 RadioButton
                 {
+                    id: clockWiseRadioBtn
                     text: "CLOCKWISE"
                     font.pixelSize: 12
                     font.bold: true
-                    checked: TelemetryData.loiterClockwise
-
-                    onCheckedChanged:
-                    {
-                        TelemetryData.loiterClockwise = checked
-                    }
+                    checked: counterClockWiseRadioBtn.checked
                 }
 
                 RadioButton
                 {
+                    id: counterClockWiseRadioBtn
                     text: "COUNTER CLOCKWISE"
                     font.pixelSize: 12
                     font.bold: true
-                    checked: !TelemetryData.loiterClockwise
-
-                    onCheckedChanged:
-                    {
-                        TelemetryData.loiterClockwise = !checked
-                    }
+                    checked: clockWiseRadioBtn.checked
                 }
             }
 
@@ -165,7 +155,7 @@ Rectangle {
                 {
                     goToWaypointConfirmation.visible = false
                     gotoButton.showConfirmationSlider = false
-                    TelemetryData.goTo(MapController.targetCoordinates)
+                    TelemetryData.goTo(MapController.targetCoordinates, Math.floor(loiterRadiusSlider.value), clockWiseRadioBtn.checked)
                     MapController.isInteractive = false
                 }
             }

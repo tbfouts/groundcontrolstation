@@ -55,20 +55,127 @@ The project is organized into the following structure:
 
 ## Building the Project
 
-1. Make sure you have Qt 6.8 or later installed with the Quick and Location modules.
-2. Configure the project with CMake:
-   ```
-   mkdir build && cd build
-   cmake ..
-   ```
-3. Build the project:
-   ```
-   make
-   ```
-4. Run the application:
-   ```
-   ./appGroundControlStation
-   ```
+You must have a Qt 6.8 install that includes that android libraries as well as the Location amd Positioning modules.
+
+### Desktop
+
+Configure the project with CMake:
+```bash
+mkdir build && cd build
+cmake ..
+```
+Build the project:
+```bash
+make
+```
+Run the application (note this path is for macOS and it varies depending on host OS):
+```
+./appGroundControlStation.app/Contents/MacOS/appGroundControlStation
+```
+   
+### Android
+
+#### Prerequisites
+Building for android requires a valid JDK and Android SDK/NDK.  Setting these up correctly is outlined here: https://doc.qt.io/qt-6/android-getting-started.html
+
+### Android Prerequisites
+
+1. Install the following tools:
+   - Qt 6.8 or later with Android components
+   - Android Studio (for Android SDK and NDK)
+   - Java Development Kit (JDK) 11 or later
+   - Android SDK Platform tools
+   - Android NDK
+   - Ninja
+
+2. Configure Qt for Android:
+   - In Qt Maintenance Tool, select and install Android components
+   - Set up Android SDK, NDK, and JDK paths in Qt Creator preferences
+
+### Build for Android
+
+1. Configure Qt Creator for Android:
+   - Open Qt Creator and load the project
+   - In Projects tab, add Android Kit configuration (e.g., Android Qt 6.8.2 Clang arm64-v8a)
+   - Set Android SDK and NDK paths if not auto-detected
+
+2. Build using Qt Creator (recommended):
+   - Select the Android kit configuration (e.g., Android Qt 6.8.2 Clang arm64-v8a)
+   - Click Build → Build Project
+   - Qt Creator will automatically run:
+```bash
+cmake --build <build-dir> --target all
+androiddeployqt --input <settings.json> --output <android-build-dir> --android-platform android-34 --jdk <jdk-path> --gradle
+```
+
+3. Alternatively, build APK from command line:
+
+   The steps below are most up-to-date here: https://doc.qt.io/qt-6/android-building-projects-from-commandline.html
+
+```bash
+# Set up environment variables
+export ANDROID_SDK_ROOT=/path/to/Android/Sdk 
+export ANDROID_NDK_ROOT=/path/to/Android/Sdk/ndk/[version]
+
+# Create build directory
+mkdir -p android-build
+
+# Use qt-cmake wrapper for proper environment setup
+~/Qt/[version]/[platform]/bin/qt-cmake \
+   -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
+   -DANDROID_NDK_ROOT=$ANDROID_NDK_ROOT \
+   -DQT_ANDROID_ABIS="arm64-v8a" \
+   -S . -B android-build \
+   -GNinja
+
+# Build the project and create APK
+cmake --build android-build --target apk
+
+# For multi-ABI builds (optional):
+# ~/Qt/[version]/[platform]/bin/qt-cmake \
+#    -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
+#    -DANDROID_NDK_ROOT=$ANDROID_NDK_ROOT \
+#    -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a;x86;x86_64" \
+#    -S . -B android-build-multi \
+#    -GNinja
+# cmake --build android-build-multi --target apk
+```
+
+### Deploy to Device
+
+1. Enable Developer Options on your Android device:
+   - Go to Settings → About Phone → Tap Build Number 7 times
+   - Go to Settings → Developer Options → Enable USB Debugging
+
+2. Connect your device via USB and deploy:
+   - Connect device to computer with USB cable
+   - From Qt Creator: Build → Deploy to Android
+   - Allow USB debugging on device when prompted
+
+3. Manual APK installation:
+   - For Qt Creator builds: Locate the APK in `<build-dir>/android-build/build/outputs/apk/debug/` directory
+   - For command-line builds: Locate the APK in `android-build/android-build/build/outputs/apk/debug/` directory
+   - Install using ADB:
+```bash
+# List connected devices first to verify connection
+adb devices
+
+# Install the APK (replace with actual path)
+adb install -r /path/to/android-build/build/outputs/apk/debug/android-build-debug.apk
+
+# To uninstall the app if needed
+adb uninstall org.qtproject.example.appGroundControlStation
+```
+The end result should look like this:
+![Emulator Screenshot](./screenshots/emulator.png)
+
+### Troubleshooting
+
+- If the app crashes on startup, check device logs:
+```bash  
+adb logcat | grep org.qtproject.example.appGroundControlStation
+  ```
+
 
 ## Features
 
@@ -84,35 +191,41 @@ The project is organized into the following structure:
 
 ### Unit Tests
 
-To run the UASStateMachine unit tests:
+To run the unit tests:
 
 1. Configure and build the tests:
-   ```
-   cd tests
-   mkdir -p build && cd build
-   cmake ..
-   make
-   ```
+```
+cd tests
+mkdir -p build && cd build
+cmake ..
+make
+```
 2. Run the tests:
-   ```
-   ./testGroundControlStation
-   ```
+```
+./testGroundControlStation
+```
    
 3. Run with verbose output:
-   ```
-   ./testGroundControlStation -v
-   ```
+```
+./testGroundControlStation -v
+```
    
 4. Run specific test functions:
-   ```
-   ./testGroundControlStation -functions testStateTransitions
-   ```
+```
+./testGroundControlStation -functions testStateTransitions
+```
 
 The current tests cover:
-- UASStateMachine state transitions
-- Signal emission during state changes
-- Proper enumeration values
-- Command methods (takeOff, land, loiter, fly)
+- UASStateMachine tests:
+  - State transitions
+  - Signal emission during state changes
+  - Proper enumeration values
+  - State transition validation
+- TelemetryDataSimulator tests:
+  - Waypoint navigation (goTo functionality with loitering parameters)
+  - State-based behavior changes
+  - Signal emissions for telemetry changes
+  - Invalid state transition validation
 
 ### GUI Tests with Squish
 
@@ -127,30 +240,30 @@ This project includes automated GUI tests using the Squish testing framework.
 #### Running Squish Tests
 
 1. Start the Squish server:
-   ```
-   squishserver --daemon
-   ```
+```
+squishserver --daemon
+```
 
 2. Run all tests:
-   ```
-   cd squish_tests
-   squishrunner --testsuite suite_GroundControlStation --testcase tc_all
-   ```
+```
+cd squish_tests
+squishrunner --testsuite suite_GroundControlStation --testcase tc_all
+```
 
 3. Run a specific test case:
-   ```
-   squishrunner --testsuite suite_GroundControlStation --testcase tc_TakeoffAndLand
-   ```
+```
+squishrunner --testsuite suite_GroundControlStation --testcase tc_TakeoffAndLand
+```
 
 4. Run tests with detailed output:
-   ```
-   squishrunner --testsuite suite_GroundControlStation --testcase tc_all --reportgen html:TakeoffTestReport
-   ```
+```
+squishrunner --testsuite suite_GroundControlStation --testcase tc_all --reportgen html:TakeoffTestReport
+```
 
 5. View the test report:
-   ```
-   open TakeoffTestReport/index.html
-   ```
+```
+open TakeoffTestReport/index.html
+```
 
 ## Future Improvement Plans
 

@@ -1,0 +1,96 @@
+@startuml Landing Sequence
+
+' Set styling
+skinparam sequenceArrowThickness 2
+skinparam participantBorderColor #006064
+skinparam participantBackgroundColor #E0F7FA
+skinparam noteBorderColor #FF9800
+skinparam noteBackgroundColor #FFF8E1
+skinparam sequenceGroupBorderColor #BDBDBD
+skinparam sequenceGroupBackgroundColor #F5F5F5
+
+' Participants
+actor "User" as User
+participant "QML\nFrontend" as Frontend
+participant "TelemetryData" as TelemetryData
+participant "TelemetryDataSimulator" as TelemetryDataSim
+participant "UASStateMachine" as StateMachine
+participant "QTimer" as Timer
+
+' Start sequence
+title Landing Sequence
+
+' Initial state: UAS is flying
+note over StateMachine: State: Flying/Loitering/FlyingToWaypoint
+
+' User initiates landing
+User -> Frontend: Click Land button
+activate Frontend
+Frontend -> TelemetryData: land()
+activate TelemetryData
+TelemetryData -> TelemetryDataSim: land()
+activate TelemetryDataSim
+
+' TelemetryDataSimulator attempts to change state
+TelemetryDataSim -> StateMachine: setCurrentState(UASState::Landing)
+activate StateMachine
+StateMachine -> StateMachine: Validate state transition\n(Flying/Loitering/FlyingToWaypoint -> Landing)
+StateMachine --> TelemetryDataSim: return true (valid transition)
+StateMachine --> Frontend: emit currentStateChanged(UASState::Landing)
+deactivate StateMachine
+
+' Update UI to show Landing state
+Frontend -> Frontend: Update UI to show Landing state
+
+' Set up timer for landing sequence
+TelemetryDataSim -> Timer: createSimTimer(250 ms)
+activate Timer
+
+' Landing simulation loop with timer
+group Landing Simulation Loop
+    loop Every 250 ms until TAKEOFF_LANDING_DURATION is reached
+        Timer --> TelemetryDataSim: timeout signal
+        TelemetryDataSim -> TelemetryDataSim: Update elapsed time
+        TelemetryDataSim -> TelemetryDataSim: Calculate progress: elapsedTime / TAKEOFF_LANDING_DURATION
+        
+        ' Gradually reduce speed and altitude
+        TelemetryDataSim -> TelemetryDataSim: updateSpeed(currentSpeed, 0, progress)
+        TelemetryDataSim -> TelemetryDataSim: updateAltitude(currentAltitude, 0, progress)
+        TelemetryDataSim -> TelemetryDataSim: updatePosition()
+        TelemetryDataSim -> TelemetryDataSim: drainBattery()
+        
+        ' Emit signals for updated telemetry data
+        TelemetryDataSim --> Frontend: emit speedChanged(speed)
+        TelemetryDataSim --> Frontend: emit altitudeChanged(altitude)
+        TelemetryDataSim --> Frontend: emit positionChanged(position)
+    end
+end
+
+' Ensure final values are exactly zero
+TelemetryDataSim -> TelemetryDataSim: speed = 0
+TelemetryDataSim -> TelemetryDataSim: altitude = 0
+TelemetryDataSim --> Frontend: emit speedChanged(0)
+TelemetryDataSim --> Frontend: emit altitudeChanged(0)
+
+' Landing sequence completed, stop timer
+Timer -> Timer: stop()
+deactivate Timer
+
+' Transition to Landed state
+TelemetryDataSim -> StateMachine: setCurrentState(UASState::Landed)
+activate StateMachine
+StateMachine -> StateMachine: Validate state transition\n(Landing -> Landed)
+StateMachine --> TelemetryDataSim: return true (valid transition)
+StateMachine --> Frontend: emit currentStateChanged(UASState::Landed)
+deactivate StateMachine
+
+' Update UI with new state
+Frontend -> Frontend: Update UI to show Landed state
+
+deactivate TelemetryDataSim
+deactivate TelemetryData
+deactivate Frontend
+
+note over StateMachine: State: Landed
+
+@enduml

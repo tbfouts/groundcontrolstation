@@ -17,6 +17,23 @@ TelemetryData::TelemetryData(QObject *parent)
 }
 
 /**
+ * @brief Constructs a TelemetryData object with a provided state machine
+ * @param stateMachine External state machine to use
+ * @param parent The parent QObject
+ *
+ * Uses the provided state machine instead of creating a new one.
+ * This is useful for testing to provide a mock or controlled state machine.
+ */
+TelemetryData::TelemetryData(UASStateMachine* stateMachine, QObject *parent)
+    : QObject(parent)
+    , m_stateMachine(stateMachine)
+{
+    // Connect state machine signals
+    connect(m_stateMachine, &UASStateMachine::currentStateChanged,
+            this, &TelemetryData::stateChanged);
+}
+
+/**
  * @brief Destructor
  */
 TelemetryData::~TelemetryData()
@@ -40,7 +57,7 @@ UASState::State TelemetryData::state() const
  */
 void TelemetryData::takeOff()
 {
-    m_stateMachine->takeOff();
+    m_stateMachine->setCurrentState(UASState::TakingOff);
 }
 
 /**
@@ -51,16 +68,10 @@ void TelemetryData::takeOff()
  */
 void TelemetryData::land()
 {
-    m_stateMachine->land();
+    m_stateMachine->setCurrentState(UASState::Landing);
 }
 
-/**
- * @brief Commands the UAS to fly
- * 
- * Delegates the fly command to the UAS state machine.
- * This command is typically used to transition from loitering to normal flight.
- */
-void TelemetryData::fly()
+void TelemetryData::goTo(const QGeoCoordinate& destination, const int loiterRadius, const bool loiterClockwise)
 {
-    m_stateMachine->fly();
+    m_stateMachine->setCurrentState(UASState::FlyingToWaypoint);
 }

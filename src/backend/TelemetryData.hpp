@@ -23,8 +23,7 @@ class TelemetryData : public QObject
     Q_PROPERTY(int speed READ speed NOTIFY speedChanged)
     Q_PROPERTY(QGeoCoordinate position READ position NOTIFY positionChanged)
     Q_PROPERTY(UASState::State state READ state NOTIFY stateChanged)
-    Q_PROPERTY(int loiterRadius READ loiterRadius WRITE setLoiterRadius NOTIFY loiterRadiusChanged)
-    Q_PROPERTY(bool loiterClockwise READ loiterClockwise WRITE setLoiterClockwise NOTIFY loiterClockwiseChanged)
+    Q_PROPERTY(int targetAltitude READ targetAltitude WRITE setTargetAltitude NOTIFY targetAltitudeChanged)
 
 public:
     /**
@@ -32,6 +31,13 @@ public:
      * @param parent The parent QObject
      */
     explicit TelemetryData(QObject* parent = nullptr);
+    
+    /**
+     * @brief Constructs a TelemetryData object with a provided state machine
+     * @param stateMachine External state machine to use
+     * @param parent The parent QObject
+     */
+    explicit TelemetryData(UASStateMachine* stateMachine, QObject* parent = nullptr);
     
     /**
      * @brief Destructor
@@ -69,49 +75,35 @@ public:
     UASState::State state() const;
 
     /**
-     * @brief Gets the current loiter radius
-     * @return Loiter radius in meters
+     * @brief Gets the target altitude
+     * @return Altitude in meters
      */
-    virtual int loiterRadius() const = 0;
-    
-    /**
-     * @brief Sets the loiter radius
-     * @param radius Loiter radius in meters
-     */
-    virtual void setLoiterRadius(int radius) = 0;
+    virtual int targetAltitude() const = 0;
+
 
     /**
-     * @brief Gets the current loiter direction
-     * @return true for clockwise, false for counter-clockwise
+     * @brief Sets the target altitude
+     * @return Altitude in meters
      */
-    virtual bool loiterClockwise() const = 0;
-    
-    /**
-     * @brief Sets the loiter direction
-     * @param clockwise true for clockwise, false for counter-clockwise
-     */
-    virtual void setLoiterClockwise(bool clockwise) = 0;
+    virtual void setTargetAltitude(const int altitude) = 0;
 
     /**
      * @brief Command the UAS to take off
      */
-    Q_INVOKABLE void takeOff();
+    Q_INVOKABLE virtual void takeOff();
     
     /**
      * @brief Command the UAS to land
      */
-    Q_INVOKABLE void land();
-    
-    /**
-     * @brief Command the UAS to fly
-     */
-    Q_INVOKABLE void fly();
+    Q_INVOKABLE virtual void land();
 
     /**
      * @brief Command the UAS to fly to a specific destination
      * @param destination The geographical coordinates to fly to
+     * @param loiterRadius The radius size for loitering
+     * @param loiterClockwise True if the UAS should loiter clockwise, false if it should loiter counterclockwise
      */
-    Q_INVOKABLE virtual void goTo(const QGeoCoordinate& destination) = 0;
+    Q_INVOKABLE virtual void goTo(const QGeoCoordinate& destination, const int loiterRadius, const bool loiterClockwise);
 
 signals:
     /**
@@ -156,6 +148,11 @@ signals:
      */
     void loiterClockwiseChanged(bool clockwise);
 
+    /**
+     * @brief Emitted when target altitude changes
+     * @param altitude The new target altitude
+     */
+    void targetAltitudeChanged(int altitude);
 protected:
     /** @brief The UAS state machine instance */
     UASStateMachine* m_stateMachine;

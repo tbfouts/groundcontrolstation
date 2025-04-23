@@ -26,6 +26,13 @@ public:
     explicit TelemetryDataSimulator(QObject* parent = nullptr);
     
     /**
+     * @brief Constructs a TelemetryDataSimulator with a provided state machine
+     * @param stateMachine External state machine to use
+     * @param parent The parent QObject
+     */
+    explicit TelemetryDataSimulator(UASStateMachine* stateMachine, QObject* parent = nullptr);
+    
+    /**
      * @brief Destructor
      */
     virtual ~TelemetryDataSimulator();
@@ -54,61 +61,44 @@ public:
      * @return Current geographical coordinates
      */
     QGeoCoordinate position() const override;
-    
-    /**
-     * @brief Commands the simulated UAS to fly to a destination
-     * @param destination The geographical coordinates to fly to
-     */
-    void goTo(const QGeoCoordinate& destination) override;
-    
-    // Loiter properties implementation
-    /**
-     * @brief Gets the loiter radius for the simulated UAS
-     * @return Loiter radius in meters
-     */
-    int loiterRadius() const override;
-    
-    /**
-     * @brief Sets the loiter radius for the simulated UAS
-     * @param radius Loiter radius in meters
-     */
-    void setLoiterRadius(int radius) override;
-    
-    /**
-     * @brief Gets the loiter direction for the simulated UAS
-     * @return true for clockwise, false for counter-clockwise
-     */
-    bool loiterClockwise() const override;
-    
-    /**
-     * @brief Sets the loiter direction for the simulated UAS
-     * @param clockwise true for clockwise, false for counter-clockwise
-     */
-    void setLoiterClockwise(bool clockwise) override;
 
-private slots:
     /**
-     * @brief Handles state changes from the UAS state machine
-     * @param newState The new state to handle
+     * @brief Gets the target altitude
+     * @return Altitude in meters
      */
-    void handleStateChange(UASState::State newState);
+    int targetAltitude() const override;
+
+
+    /**
+     * @brief Sets the target altitude
+     * @return Altitude in meters
+     */
+    void setTargetAltitude(const int altitude) override;
+    
+    /**
+     * @brief Command the UAS to take off
+     */
+    Q_INVOKABLE virtual void takeOff() override;
+
+    /**
+     * @brief Command the UAS to land
+     */
+    Q_INVOKABLE virtual void land() override;
+
+    /**
+     * @brief Command the UAS to fly to a specific destination
+     * @param destination The geographical coordinates to fly to
+     * @param loiterRadius The radius size for loitering
+     * @param loiterClockwise True if the UAS should loiter clockwise, false if it should loiter counterclockwise
+     */
+    Q_INVOKABLE virtual void goTo(const QGeoCoordinate& destination, const int loiterRadius, const bool loiterClockwise) override;
 
 private:
-    /**
-     * @brief Simulates the takeoff sequence
-     */
-    void simulateTakeOff();
-    
-    /**
-     * @brief Simulates the landing sequence
-     */
-    void simulateLanding();
-    
     /**
      * @brief Simulates loitering around a center point
      * @param centerPoint The center of the loiter pattern
      */
-    void simulateLoitering(const QGeoCoordinate& centerPoint);
+    void simulateLoitering(const QGeoCoordinate& centerPoint, const int loiterRadius, const bool loiterClockwise);
     
     /**
      * @brief Simulates normal flying behavior
@@ -153,12 +143,6 @@ private:
      */
     void applyFlightVariations();
     
-    /**
-     * @brief Simulates flying to a waypoint
-     * @param destination The destination coordinates
-     */
-    void flyToWaypoint(const QGeoCoordinate& destination);
-    
     /** @brief The destination coordinates for navigation */
     QGeoCoordinate m_destinationCoordinate;
 
@@ -170,6 +154,9 @@ private:
     
     /** @brief Simulated altitude (meters) */
     int m_altitude;
+
+    /** @brief Target altitude (meters) as defined by the user */
+    int m_target_altitude;
     
     /** @brief Simulated speed (meters per second) */
     int m_speed;
@@ -179,12 +166,6 @@ private:
     
     /** @brief Current direction in degrees (0-359) */
     int m_direction;
-    
-    /** @brief Loiter radius in meters */
-    int m_loiterRadius;
-    
-    /** @brief Loiter direction (true=clockwise, false=counter-clockwise) */
-    bool m_loiterClockwise;
     
     /** @brief Movement step size in degrees per update */
     const double MOVEMENT_STEP = 0.00001;

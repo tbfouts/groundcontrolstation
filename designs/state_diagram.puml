@@ -1,0 +1,83 @@
+@startuml UAS State Machine
+
+' Set styling
+skinparam StateBackgroundColor #E0F7FA
+skinparam StateBorderColor #006064
+skinparam StateFontColor black
+skinparam StateFontStyle bold
+skinparam StateStartColor #00BFA5
+skinparam StateEndColor #DD2C00
+skinparam ArrowColor #006064
+skinparam ArrowFontColor #004D40
+
+' Define the state machine title
+title UAS State Machine
+
+' Define start point
+[*] --> Landed : System Initialization
+
+' Define the states based on UASState::State enum
+state "0: Landed" as Landed
+
+state "1: TakingOff" as TakingOff
+
+state "2: Flying" as Flying
+
+state "3: FlyingToWaypoint" as FlyingToWaypoint
+
+state "4: Loitering" as Loitering
+
+state "5: Landing" as Landing
+
+note right of Landed : UAS is on the ground\nMotors off\nReady for next flight
+note right of TakingOff : UAS is in the process of taking off\nIncreasing altitude and speed
+note right of Flying : UAS is flying normally\nMaintaining stable flight
+note right of FlyingToWaypoint : UAS is navigating to a specific waypoint\nFollowing programmed path
+note right of Loitering : UAS is circling around a point\nMaintaining constant radius and altitude
+note right of Landing : UAS is in the process of landing\nDecreasing altitude and speed
+
+' Define transitions between states
+Landed --> TakingOff : takeOff()
+TakingOff --> Flying : Once altitude reached
+Flying --> FlyingToWaypoint : goTo(destination)
+FlyingToWaypoint --> Loitering : When target reached
+Loitering --> Flying : Exit loiter
+Flying --> Landing : land()
+Landing --> Landed : When altitude zero
+
+' Special case transitions
+FlyingToWaypoint --> Flying : Abort navigation
+FlyingToWaypoint --> Landing : land() during navigation
+Loitering --> Landing : land() during loitering
+TakingOff --> Landing : Abort takeoff
+
+' Add extra details as notes
+note bottom of FlyingToWaypoint
+  Navigation can be aborted or
+  can transition to loitering
+  when destination is reached
+end note
+
+note bottom of Loitering
+  Can be clockwise or counter-clockwise
+  with configurable radius
+end note
+
+' State descriptions as legend
+legend right
+  **UAS Flight States Enumeration**
+  
+  0: Landed - Initial and final state
+  1: TakingOff - Transitional state to Flying
+  2: Flying - Normal flight operations
+  3: FlyingToWaypoint - Navigation mode
+  4: Loitering - Circling a coordinate
+  5: Landing - Transitional state to Landed
+  
+  **Invalid Transitions (Rejected):**
+  - Can't land if already landed
+  - Can't take off if already flying
+  - Can't go to waypoint if not in a flying state
+end legend
+
+@enduml

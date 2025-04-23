@@ -87,11 +87,30 @@ Item {
             anchors.margins: 10
             spacing: 15
 
+            Text
+            {
+                text: "Target Cruise Altitude: " + Math.floor(targetAltitude.value) + "m"
+                font.pixelSize: 12
+            }
+
+            Slider
+            {
+                id: targetAltitude
+                width: parent.width
+
+                from: 20
+                to: 200
+                value: 120
+
+                onValueChanged: TelemetryData.targetAltitude = Math.floor(value)
+            }
+
             MapButton
             {
                 id: snapToUasBtn
                 iconSource: "/images/SnapToUAS.png"
                 visible: false // functionality to be added as a later improvement
+                anchors.right: parent.right
             }
 
             MapButton
@@ -99,6 +118,7 @@ Item {
                 id: zoomInBtn
                 iconSource: "/images/Plus.png"
                 onClicked: MapController.zoomLevel = MapController.zoomLevel + 1
+                anchors.right: parent.right
             }
 
             MapButton
@@ -106,6 +126,7 @@ Item {
                 id: zoomOutBtn
                 iconSource: "/images/Minus.png"
                 onClicked: MapController.zoomLevel = MapController.zoomLevel - 1
+                anchors.right: parent.right
             }
         }
 

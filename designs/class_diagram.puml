@@ -1,0 +1,138 @@
+@startuml Ground Control Station Class Diagram
+
+' Style and configuration settings
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam classFontSize 12
+skinparam classBackgroundColor #E0F7FA
+skinparam classBorderColor #006064
+skinparam classFontColor #000000
+skinparam arrowColor #006064
+skinparam packageBackgroundColor #F5F5F5
+skinparam packageBorderColor #BDBDBD
+
+' Define packages for organization
+package "State Management" {
+    class UASState {
+        + {static} enum State
+        + Landed
+        + TakingOff
+        + Flying
+        + FlyingToWaypoint
+        + Loitering
+        + Landing
+    }
+    
+    class UASStateMachine {
+        - m_currentState: UASState::State
+        + UASStateMachine(parent: QObject*)
+        + currentState(): UASState::State
+        + setCurrentState(state: UASState::State): bool
+        ..signals..
+        + currentStateChanged(state: UASState::State)
+    }
+}
+
+package "Telemetry" {
+    abstract class TelemetryData {
+        # m_stateMachine: UASStateMachine*
+        + TelemetryData(parent: QObject*)
+        + TelemetryData(stateMachine: UASStateMachine*, parent: QObject*)
+        + {abstract} battery(): int
+        + {abstract} altitude(): int
+        + {abstract} speed(): int
+        + {abstract} position(): QGeoCoordinate
+        + state(): UASState::State
+        + {abstract} targetAltitude(): int
+        + {abstract} setTargetAltitude(altitude: int): void
+        + takeOff(): void
+        + land(): void
+        + goTo(destination: QGeoCoordinate, loiterRadius: int, loiterClockwise: bool): void
+        ..signals..
+        + batteryChanged(battery: int)
+        + altitudeChanged(altitude: int)
+        + speedChanged(speed: int)
+        + positionChanged(position: QGeoCoordinate)
+        + stateChanged(state: UASState::State)
+        + loiterRadiusChanged(radius: int)
+        + loiterClockwiseChanged(clockwise: bool)
+        + targetAltitudeChanged(altitude: int)
+    }
+    
+    class TelemetryDataSimulator {
+        - m_destinationCoordinate: QGeoCoordinate
+        - m_random: QRandomGenerator
+        - m_battery: int
+        - m_altitude: int
+        - m_target_altitude: int
+        - m_speed: int
+        - m_position: QGeoCoordinate
+        - m_direction: int
+        - MOVEMENT_STEP: double
+        - TAKEOFF_LANDING_DURATION: int
+        + TelemetryDataSimulator(parent: QObject*)
+        + TelemetryDataSimulator(stateMachine: UASStateMachine*, parent: QObject*)
+        + battery(): int
+        + altitude(): int
+        + speed(): int
+        + position(): QGeoCoordinate
+        + targetAltitude(): int
+        + setTargetAltitude(altitude: int): void
+        + takeOff(): void
+        + land(): void
+        + goTo(destination: QGeoCoordinate, loiterRadius: int, loiterClockwise: bool): void
+        - simulateLoitering(centerPoint: QGeoCoordinate, loiterRadius: int, loiterClockwise: bool): void
+        - simulateFlying(): void
+        - createSimTimer(interval: int): QTimer*
+        - updatePosition(): void
+        - drainBattery(): void
+        - updateSpeed(initialSpeed: int, targetSpeed: int, progress: double): void
+        - updateAltitude(initialAltitude: int, targetAltitude: int, progress: double): void
+        - applyFlightVariations(): void
+    }
+}
+
+package "Map Control" {
+    class MapController {
+        - m_isInteractive: bool
+        - m_targetCoordinates: QGeoCoordinate
+        - m_zoomLevel: int
+        + MapController(parent: QObject*)
+        + isInteractive(): bool
+        + targetCoordinates(): QGeoCoordinate
+        + zoomLevel(): int
+        + setIsInteractive(interactive: bool): void
+        + setTargetCoordinates(coordinates: QGeoCoordinate): void
+        + setZoomLevel(level: int): void
+        + {static} create(qmlEngine: QQmlEngine*, jsEngine: QJSEngine*): MapController*
+        ..signals..
+        + isInteractiveChanged(interactive: bool)
+        + targetCoordinatesChanged(coordinates: QGeoCoordinate)
+        + zoomLevelChanged(level: int)
+    }
+}
+
+' Define relationships
+UASState <-- UASStateMachine: uses
+UASStateMachine *-- TelemetryData: contains
+TelemetryData <|-- TelemetryDataSimulator: implements
+
+note bottom of TelemetryDataSimulator
+  Simulates flight dynamics including:
+  - Takeoff and landing sequences
+  - Flying to waypoints
+  - Loitering around locations
+  - Battery drain and telemetry updates
+end note
+
+note bottom of UASStateMachine
+  Controls valid state transitions for
+  the UAS throughout its flight cycles
+end note
+
+note bottom of MapController
+  Controls the map view and provides
+  the ability to navigate and zoom the map
+end note
+
+@enduml

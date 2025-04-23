@@ -51,8 +51,8 @@ void TestUASStateMachine::testStateTransitions()
     m_stateMachine->setCurrentState(UASState::Landed);
     spy.clear();
     
-    // 1. Landed -> TakingOff (via takeOff command)
-    m_stateMachine->takeOff();
+    // 1. Landed -> TakingOff (via setCurrentState)
+    m_stateMachine->setCurrentState(UASState::TakingOff);
     QCOMPARE(m_stateMachine->currentState(), UASState::TakingOff);
     verifyStateChangeSignal(spy, UASState::TakingOff);
     
@@ -68,21 +68,21 @@ void TestUASStateMachine::testStateTransitions()
     QCOMPARE(m_stateMachine->currentState(), UASState::FlyingToWaypoint);
     verifyStateChangeSignal(spy, UASState::FlyingToWaypoint);
     
-    // 4. FlyingToWaypoint -> Loitering (via loiter command)
+    // 4. FlyingToWaypoint -> Loitering (via setCurrentState)
     spy.clear();
-    m_stateMachine->loiter();
+    m_stateMachine->setCurrentState(UASState::Loitering);
     QCOMPARE(m_stateMachine->currentState(), UASState::Loitering);
     verifyStateChangeSignal(spy, UASState::Loitering);
     
-    // 5. Loitering -> Flying (via fly command)
+    // 5. Loitering -> Flying (via setCurrentState)
     spy.clear();
-    m_stateMachine->fly();
+    m_stateMachine->setCurrentState(UASState::Flying);
     QCOMPARE(m_stateMachine->currentState(), UASState::Flying);
     verifyStateChangeSignal(spy, UASState::Flying);
     
-    // 6. Flying -> Landing (via land command)
+    // 6. Flying -> Landing (via setCurrentState)
     spy.clear();
-    m_stateMachine->land();
+    m_stateMachine->setCurrentState(UASState::Landing);
     QCOMPARE(m_stateMachine->currentState(), UASState::Landing);
     verifyStateChangeSignal(spy, UASState::Landing);
     
@@ -157,44 +157,44 @@ void TestUASStateMachine::testSignalEmission()
 
 void TestUASStateMachine::testCommandSignals()
 {
-    // Test that commands emit the appropriate signals
+    // Test that state changes emit the appropriate signals
     
     // Setup: Reset to landed state
     m_stateMachine->setCurrentState(UASState::Landed);
     
-    // Test takeOff() command
-    QSignalSpy takeoffSpy(m_stateMachine, &UASStateMachine::currentStateChanged);
-    QVERIFY(takeoffSpy.isValid());
+    // Test transition to TakingOff
+    QSignalSpy stateSpy(m_stateMachine, &UASStateMachine::currentStateChanged);
+    QVERIFY(stateSpy.isValid());
     
-    // Execute takeOff command and verify
-    m_stateMachine->takeOff();
-    QVERIFY(takeoffSpy.wait(100)); // Wait for signal
-    QCOMPARE(takeoffSpy.count(), 1);
-    QCOMPARE(takeoffSpy.at(0).at(0).value<UASState::State>(), UASState::TakingOff);
+    // Execute state change and verify
+    m_stateMachine->setCurrentState(UASState::TakingOff);
+    QVERIFY(stateSpy.wait(100)); // Wait for signal
+    QCOMPARE(stateSpy.count(), 1);
+    QCOMPARE(stateSpy.at(0).at(0).value<UASState::State>(), UASState::TakingOff);
     
     // Test state is in Flying
     m_stateMachine->setCurrentState(UASState::Flying);
-    takeoffSpy.clear();
+    stateSpy.clear();
     
-    // Test loiter() command
-    m_stateMachine->loiter();
-    QVERIFY(takeoffSpy.wait(100)); // Wait for signal
-    QCOMPARE(takeoffSpy.count(), 1);
-    QCOMPARE(takeoffSpy.at(0).at(0).value<UASState::State>(), UASState::Loitering);
+    // Test transition to Loitering
+    m_stateMachine->setCurrentState(UASState::Loitering);
+    QVERIFY(stateSpy.wait(100)); // Wait for signal
+    QCOMPARE(stateSpy.count(), 1);
+    QCOMPARE(stateSpy.at(0).at(0).value<UASState::State>(), UASState::Loitering);
     
-    // Test fly() command - go back to flying
-    takeoffSpy.clear();
-    m_stateMachine->fly();
-    QVERIFY(takeoffSpy.wait(100)); // Wait for signal
-    QCOMPARE(takeoffSpy.count(), 1);
-    QCOMPARE(takeoffSpy.at(0).at(0).value<UASState::State>(), UASState::Flying);
+    // Test transition back to flying
+    stateSpy.clear();
+    m_stateMachine->setCurrentState(UASState::Flying);
+    QVERIFY(stateSpy.wait(100)); // Wait for signal
+    QCOMPARE(stateSpy.count(), 1);
+    QCOMPARE(stateSpy.at(0).at(0).value<UASState::State>(), UASState::Flying);
     
-    // Test land() command
-    takeoffSpy.clear();
-    m_stateMachine->land();
-    QVERIFY(takeoffSpy.wait(100)); // Wait for signal
-    QCOMPARE(takeoffSpy.count(), 1);
-    QCOMPARE(takeoffSpy.at(0).at(0).value<UASState::State>(), UASState::Landing);
+    // Test transition to Landing
+    stateSpy.clear();
+    m_stateMachine->setCurrentState(UASState::Landing);
+    QVERIFY(stateSpy.wait(100)); // Wait for signal
+    QCOMPARE(stateSpy.count(), 1);
+    QCOMPARE(stateSpy.at(0).at(0).value<UASState::State>(), UASState::Landing);
 }
 
 void TestUASStateMachine::testInvalidTransitions()
@@ -214,7 +214,7 @@ void TestUASStateMachine::testInvalidTransitions()
     // Attempt invalid operation - try to take off when already flying
     // Note: The current implementation might allow this, but a robust
     // state machine should prevent it
-    m_stateMachine->takeOff();
+    bool success = m_stateMachine->setCurrentState(UASState::TakingOff);
     
     // Check if the takeoff command was ignored or handled
     // This assertion should be adjusted based on how invalid transitions are handled

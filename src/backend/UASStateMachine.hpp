@@ -69,47 +69,16 @@ public:
      * @return The current state
      */
     UASState::State currentState() const;
-    
-    /**
-     * @brief Commands the UAS to take off
-     * 
-     * Transitions from Landed to TakingOff state if currently landed.
-     * Otherwise, the command is ignored.
-     */
-    Q_INVOKABLE void takeOff();
-    
-    /**
-     * @brief Commands the UAS to land
-     * 
-     * Transitions to Landing state if currently in a flyable state
-     * (Flying, FlyingToWaypoint, or Loitering). Otherwise, the command is ignored.
-     */
-    Q_INVOKABLE void land();
-    
-    /**
-     * @brief Commands the UAS to loiter around the current position
-     * 
-     * Transitions to Loitering state if currently in a flying state
-     * (Flying or FlyingToWaypoint). Otherwise, the command is ignored.
-     */
-    Q_INVOKABLE void loiter();
-    
-    /**
-     * @brief Commands the UAS to fly normally
-     * 
-     * Transitions to Flying state if currently Loitering or TakingOff.
-     * Otherwise, the command is ignored.
-     */
-    Q_INVOKABLE void fly();
-    
+
     /**
      * @brief Directly sets the current state
      * @param state The new state to set
+     * @return True if success, false otherwise
      * 
      * This method is primarily used by the TelemetryDataSimulator to
      * update the state machine based on simulation events.
      */
-    Q_INVOKABLE void setCurrentState(UASState::State state);
+    Q_INVOKABLE bool setCurrentState(UASState::State state);
     
 signals:
     /**

@@ -1,0 +1,92 @@
+@startuml TakeOff Sequence
+
+' Set styling
+skinparam sequenceArrowThickness 2
+skinparam participantBorderColor #006064
+skinparam participantBackgroundColor #E0F7FA
+skinparam noteBorderColor #FF9800
+skinparam noteBackgroundColor #FFF8E1
+skinparam sequenceGroupBorderColor #BDBDBD
+skinparam sequenceGroupBackgroundColor #F5F5F5
+
+' Participants
+actor "User" as User
+participant "QML\nFrontend" as Frontend
+participant "TelemetryData" as TelemetryData
+participant "TelemetryDataSimulator" as TelemetryDataSim
+participant "UASStateMachine" as StateMachine
+participant "QTimer" as Timer
+
+' Start sequence
+title Take Off Sequence
+
+' Initial state: UAS is on the ground
+note over StateMachine: State: Landed
+
+' User initiates takeoff
+User -> Frontend: Click TakeOff button
+activate Frontend
+Frontend -> TelemetryData: takeOff()
+activate TelemetryData
+TelemetryData -> TelemetryDataSim: takeOff()
+activate TelemetryDataSim
+
+' TelemetryDataSimulator attempts to change state
+TelemetryDataSim -> StateMachine: setCurrentState(UASState::TakingOff)
+activate StateMachine
+StateMachine -> StateMachine: Validate state transition\n(Landed -> TakingOff)
+StateMachine --> TelemetryDataSim: return true (valid transition)
+deactivate StateMachine
+
+' Set up timer for takeoff sequence
+TelemetryDataSim -> TelemetryDataSim: Initialize takeoff parameters\nGenerate random direction
+TelemetryDataSim -> Timer: createSimTimer(250 ms)
+activate Timer
+
+' Takeoff simulation loop with timer
+group Takeoff Simulation Loop
+    loop Every 250 ms until TAKEOFF_LANDING_DURATION is reached
+        Timer --> TelemetryDataSim: timeout signal
+        TelemetryDataSim -> TelemetryDataSim: Update elapsed time
+        TelemetryDataSim -> TelemetryDataSim: Calculate progress: elapsedTime / TAKEOFF_LANDING_DURATION
+        TelemetryDataSim -> TelemetryDataSim: updateSpeed(currentSpeed, targetSpeed, progress)
+        
+        note right of TelemetryDataSim
+            Once speed > 10 m/s, 
+            begin altitude increase
+        end note
+        
+        TelemetryDataSim -> TelemetryDataSim: updateAltitude(currentAltitude, targetAltitude, progress)
+        TelemetryDataSim -> TelemetryDataSim: updatePosition()
+        TelemetryDataSim -> TelemetryDataSim: drainBattery()
+        
+        ' Emit signals for updated telemetry data
+        TelemetryDataSim --> Frontend: emit speedChanged(speed)
+        TelemetryDataSim --> Frontend: emit altitudeChanged(altitude)
+        TelemetryDataSim --> Frontend: emit positionChanged(position)
+    end
+end
+
+' Takeoff sequence completed
+Timer -> Timer: stop()
+deactivate Timer
+
+' Transition to Flying state
+TelemetryDataSim -> TelemetryDataSim: simulateFlying()
+TelemetryDataSim -> StateMachine: setCurrentState(UASState::Flying)
+activate StateMachine
+StateMachine -> StateMachine: Validate state transition\n(TakingOff -> Flying)
+StateMachine --> TelemetryDataSim: return true (valid transition)
+StateMachine --> Frontend: emit currentStateChanged(UASState::Flying)
+deactivate StateMachine
+
+' Update UI with new state
+Frontend -> Frontend: Update UI to show Flying state
+
+deactivate TelemetryDataSim
+deactivate TelemetryData
+deactivate Frontend
+
+note over StateMachine: State: Flying
+
+@enduml
